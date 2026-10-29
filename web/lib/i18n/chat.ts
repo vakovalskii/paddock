@@ -90,6 +90,7 @@ const ru: Record<string, string> = {
   "text": "текст",
   "opening image…": "открываю картинку…",
   "download": "скачать",
+  "Chats": "Чаты",
 };
 
 export default ru;

@@ -5,6 +5,7 @@ import { fmtDuration } from "@/lib/format";
 import { FilesPanel } from "./files-panel";
 import { t, locale } from "@/lib/i18n";
 import { Icon } from "./icons";
+import { store } from "@/lib/store";
 import type { PaneState } from "./pane";
 
 export type SideTab = "files" | "actions" | "net" | "sessions";
@@ -23,6 +24,9 @@ const kindLook: Record<ToolKind, { label: string; color: string }> = {
   tool: { label: "tool", color: "var(--muted)" },
 };
 
+const SIDE_DEFAULT = 480;
+const SIDE_MIN = 320;
+
 export function SidePanel({ tab, setTab, act, states, visible, activePane, titleOf, readFile, onFocusPane, snapshotNow, restore, onClose }: {
   tab: SideTab;
   setTab: (t: SideTab) => void;
@@ -37,6 +41,25 @@ export function SidePanel({ tab, setTab, act, states, visible, activePane, title
   restore: (d: SnapshotData) => void;
   onClose: () => void;
 }) {
+  // Desktop width is dragged by the left edge and remembered; on narrow screens the panel covers the chat.
+  const [width, setWidth] = useState(() => store.get<number>("paddock.sideWidth", SIDE_DEFAULT));
+  const resize = (w: number) => {
+    const v = Math.round(Math.min(Math.max(w, SIDE_MIN), window.innerWidth * 0.7));
+    setWidth(v);
+    store.set("paddock.sideWidth", v);
+  };
+  const startResize = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const move = (m: PointerEvent) => resize(window.innerWidth - m.clientX);
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      document.body.style.cursor = "";
+    };
+    document.body.style.cursor = "col-resize";
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
   const tabs: [SideTab, string, number | null][] = [
     ["files", t("Files"), act.files.length || null],
     ["actions", t("Actions"), act.actions.length || null],
@@ -44,7 +67,10 @@ export function SidePanel({ tab, setTab, act, states, visible, activePane, title
     ["sessions", t("Sessions"), states.filter((s) => s.running).length || null],
   ];
   return (
-    <aside className="fixed inset-y-0 right-0 z-20 flex w-full max-w-[34rem] flex-col border-l border-[var(--border)] bg-[var(--sidebar)] lg:static lg:w-[30rem]">
+    <aside style={{ "--side-w": `${width}px` } as React.CSSProperties}
+      className="fixed inset-y-0 right-0 z-20 flex w-full max-w-[34rem] flex-col border-l border-[var(--border)] bg-[var(--sidebar)] lg:relative lg:w-[var(--side-w)] lg:max-w-none lg:shrink-0">
+      <div onPointerDown={startResize} onDoubleClick={() => resize(SIDE_DEFAULT)} title={t("Drag to resize, double-click to reset")} data-side-resize
+        className="absolute inset-y-0 -left-1 z-10 hidden w-2 cursor-col-resize hover:bg-[var(--accent)]/30 lg:block" />
       <div className="flex h-14 shrink-0 items-center gap-1 border-b border-[var(--border)]/60 px-2">
         {tabs.map(([id, label, n]) => (
           <button key={id} onClick={() => setTab(id)} data-side-tab={id}

@@ -6,7 +6,7 @@ import { Icon } from "./icons";
 
 export type ThreadInfo = { id: string; title: string; updatedAt: number };
 
-export function Sidebar({ threads, current, openIds, running, email, connected, open, onNew, listFolders, createFolder, account, loadUsage, resetLimits, onOpen, onArchive, onClose, onLogout, onSettings }: {
+export function Sidebar({ threads, current, openIds, running, email, connected, open, collapsed, onNew, listFolders, createFolder, account, loadUsage, resetLimits, onOpen, onArchive, onClose, onLogout, onSettings }: {
   threads: ThreadInfo[];
   current: string | null;
   openIds: string[];
@@ -14,6 +14,7 @@ export function Sidebar({ threads, current, openIds, running, email, connected, 
   email: string;
   connected: boolean;
   open: boolean;
+  collapsed: boolean;
   onNew: (cwd?: string) => void;
   listFolders: () => Promise<string[]>;
   createFolder: (name: string) => Promise<void>;
@@ -42,7 +43,7 @@ export function Sidebar({ threads, current, openIds, running, email, connected, 
     <>
       {open && <div onClick={onClose} className="fixed inset-0 z-10 bg-black/50 md:hidden" />}
       <aside
-        className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-20 w-72 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] md:static md:flex`}
+        className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-20 w-72 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] md:static ${collapsed ? "md:hidden" : "md:flex"}`}
       >
         <div className="flex items-center gap-2 px-4 pb-2 pt-4">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] font-mono text-sm font-bold text-black">

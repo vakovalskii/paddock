@@ -34,6 +34,12 @@ function Workspace({ email }: { email: string }) {
   const [connected, setConnected] = useState(false);
   const [threads, setThreads] = useState<ThreadInfo[]>([]);
   const [sidebar, setSidebar] = useState(false);
+  // Mobile: the sidebar slides over the chat (sidebar). Desktop: it can be collapsed, and that is remembered.
+  const [collapsed, setCollapsed] = useState(() => store.get<boolean>("paddock.sidebarCollapsed", false));
+  const toggleSidebar = () => {
+    if (!window.matchMedia("(min-width: 768px)").matches) return setSidebar((o) => !o);
+    setCollapsed((c) => (store.set("paddock.sidebarCollapsed", !c), !c));
+  };
   const [models, setModels] = useState<Model[]>([]);
   const [ndModels, setNdModels] = useState<Model[]>([]);
   const [defaultSel, setDefaultSel] = useState<Selection | null>(null);
@@ -47,7 +53,13 @@ function Workspace({ email }: { email: string }) {
 
   // Раскладка и какие треды открыты в окнах — переживают перезагрузку вкладки.
   type Saved = { layout: Layout; threads: (string | null)[]; slots?: number[]; col?: number; row?: number };
-  const saved = useMemo(() => store.get<Saved>("paddock.panes", { layout: 1, threads: [] }), []);
+  // ?chat=<id> in the address opens that chat in the first pane, so a link to a chat can be shared or reopened.
+  const saved = useMemo(() => {
+    const s = store.get<Saved>("paddock.panes", { layout: 1, threads: [] });
+    const chat = new URLSearchParams(window.location.search).get("chat");
+    if (chat && !s.threads.includes(chat)) s.threads = [chat, ...s.threads.slice(1)];
+    return s;
+  }, []);
   const [layout, setLayout] = useState<Layout>(saved.layout);
   // slots[место на сетке] = номер окна. Перетаскивание меняет местами записи, сами окна (и их состояние) не пересоздаются.
   const [slots, setSlots] = useState<number[]>(() => (saved.slots?.length === PANES ? saved.slots : [0, 1, 2, 3]));
@@ -324,6 +336,11 @@ function Workspace({ email }: { email: string }) {
 
   // Файлы — по активному окну. Панель сама открывается, когда Codex начал писать файлы в живом ходе.
   const act = states[activePane];
+  // The address follows the active chat: reload or a pasted link lands on the same chat.
+  useEffect(() => {
+    const url = act.threadId ? `?chat=${act.threadId}` : window.location.pathname;
+    if (window.location.search !== (act.threadId ? url : "")) window.history.replaceState(null, "", url);
+  }, [act.threadId]);
   const seenFiles = useRef<number[]>(Array(PANES).fill(0));
   useEffect(() => {
     states.forEach((s, i) => {
@@ -389,6 +406,7 @@ function Workspace({ email }: { email: string }) {
         email={email}
         connected={connected}
         open={sidebar}
+        collapsed={collapsed}
         onNew={newThread}
         listFolders={listFolders}
         createFolder={createFolder}
@@ -410,6 +428,10 @@ function Workspace({ email }: { email: string }) {
         )}
 
         <div className="flex h-10 shrink-0 items-center gap-1 border-b border-[var(--border)]/60 px-2">
+          <button onClick={toggleSidebar} title={t("Chats")} data-sidebar-toggle
+            className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg hover:bg-[var(--panel)] ${collapsed ? "text-[var(--muted)]" : "text-[var(--faint)]"}`}>
+            <Icon name="sidebar" size={15} />
+          </button>
           {layout !== 1 && (
             <div className="flex min-w-0 items-center gap-0.5">
               {visible.map((i) => (

@@ -81,6 +81,7 @@ const ru: Record<string, string> = {
   "Reasoning effort": "Усилие рассуждения",
   "copied": "скопировано",
   "copy": "копировать",
+  "Drag to resize, double-click to reset": "Потяните, чтобы изменить ширину; двойной клик — сбросить",
 };
 
 export default ru;
