@@ -1,0 +1,8 @@
+# Paddock execpolicy: destructive commands always stop at an approval card, whatever approval_policy says.
+# With sandbox_mode = "danger-full-access" nothing else stops the agent, and "on-request" lets the model decide.
+# Installed into ~/.codex/rules/ on every container start (entrypoint.sh); add your own rules in other files there.
+prefix_rule(pattern = ["rm"], decision = "prompt", justification = "deletes files")
+prefix_rule(pattern = ["rmdir"], decision = "prompt", justification = "deletes folders")
+prefix_rule(pattern = ["shred"], decision = "prompt", justification = "destroys files")
+prefix_rule(pattern = ["truncate"], decision = "prompt", justification = "empties files")
+prefix_rule(pattern = ["git", ["reset", "clean", "push"]], decision = "prompt", justification = "rewrites or publishes git history")

@@ -191,8 +191,7 @@ type CodexConfig = {
 // Функция, а не константа: подписи переводятся при рендере.
 const options = () => ({
   approval_policy: [
-    ["on-request", t("when the model asks")],
-    ["untrusted", t("everything except safe commands")],
+    ["on-request", t("when the model asks; rm and git push/reset always")],
     ["never", t("never ask")],
   ],
   sandbox_mode: [
@@ -218,7 +217,8 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
       const v: CodexConfig = {
         model: c.model ?? "",
         model_reasoning_effort: c.model_reasoning_effort ?? "",
-        approval_policy: typeof c.approval_policy === "string" ? c.approval_policy : "on-request",
+        // "untrusted" is gone from Codex; an old config that still has it shows as the default.
+        approval_policy: typeof c.approval_policy === "string" && c.approval_policy !== "untrusted" ? c.approval_policy : "on-request",
         sandbox_mode: c.sandbox_mode ?? "danger-full-access",
         web_search: c.web_search ?? "live",
         developer_instructions: c.developer_instructions ?? "",

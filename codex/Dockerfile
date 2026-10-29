@@ -12,7 +12,7 @@ RUN apt-get update \
  && mkdir -p /workspace /home/codex/.codex \
  && chown -R codex:codex /workspace /home/codex
 
-COPY --chown=codex:codex config.toml /opt/codex/config.toml
+COPY --chown=codex:codex config.toml paddock.rules /opt/codex/
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER codex
