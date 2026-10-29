@@ -1,0 +1,13 @@
+{
+  "id": "agents",
+  "name": {
+    "en": "Agents",
+    "ru": "Агенты"
+  },
+  "description": {
+    "en": "Lets the agent see your other open chats and message them: hand off work, ask for a review, coordinate. Only your own chats.",
+    "ru": "Агент видит другие открытые чаты и может им писать: передать задачу, попросить ревью, договориться. Только ваши чаты."
+  },
+  "bin": "paddock-agents.mjs",
+  "skill": "paddock-agents"
+}

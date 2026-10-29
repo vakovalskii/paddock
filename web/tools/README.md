@@ -24,4 +24,5 @@ Rules that keep tools working everywhere:
 
 | tool | what |
 |---|---|
+| [agents](agents/) | see the user's other open chats and message them (via the harness app-server) |
 | [images](images/) | image generation and editing, NeuralDeep |
