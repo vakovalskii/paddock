@@ -17,6 +17,11 @@ Paddock 不自带 Agent。它使用现成的 harness（目前是 Codex app-serve
 - **模型。** ChatGPT 订阅（直接在界面中用 device code 登录），以及任何支持 Responses API 的 OpenAI 兼容服务商，例如 [NeuralDeep](https://neuraldeep.ru/docs)。
 - **与 harness 无关的工具。** Paddock 工具 = 一个 CLI + 一个告诉 Agent 何时调用它的 skill。所有 harness 和所有模型都有 shell，所以工具在任何地方都能用。第一个工具：图像生成与编辑（`paddock-images`）。
 - **查看每个对话可以用什么。** 当前会话可用的 skill 和 CLI，以及 Agent 实际用了哪些。
+- **Agent 之间可以对话。** `paddock-agents` 工具让一个窗格里的 Agent 列出你其他打开的对话、读取它们并给它们发消息：移交任务、请求 review、汇总所有对话的状态。接收方窗格显示为 *来自 Agent «…»*，提问方窗格显示问题和回答。
+- **与 Codex CLI 相同的斜杠命令。** `/new`、`/compact`、`/review`、`/diff`、`/init`、`/rename`、`/fork`、`/goal`、`/status`、`/help`，以及在对话中执行 shell 命令的 `!命令`；输入 `/` 会弹出提示列表。
+- **子 Agent。** Codex 子 Agent 的调用以卡片显示；在 设置 → Codex 中可为 OpenAI 模型开启 `multi_agent_v2`（列表、消息、中断）。
+- **危险命令总是先询问。** `rm`、`git push/reset/clean` 等命令无论审批策略如何都会停在确认卡片上（随 harness 一起提供的 Codex execpolicy 规则）。
+- **对话链接。** 地址跟随当前对话（`?chat=<id>`）；对话列表可折叠，侧边面板可调整宽度。
 - **类似 [agentbelt](https://github.com/vakovalskii/agentbelt) 的侧边栏。** Agent 修改过的文件、带过滤和 diff 的实时操作流、网络健康状况（每个代理 × chatgpt.com / api.openai.com / api.neuraldeep.ru）、每个窗格的状态（运行中 / 等待审批 / 已完成），以及可在任意设备上恢复的布局快照。
 - **隔离是产品的一部分。** 每用户一个容器，`cap_drop: ALL`，无法直接访问互联网：出口只能经过带故障切换的 gost 代理链；局域网和宿主机均被封闭。
 - **登录。** 密码加 **2FA (TOTP)**，支持 Authy、Google Authenticator 或 1Password；可信浏览器选项；备用码。
@@ -26,6 +31,10 @@ Paddock 不自带 Agent。它使用现成的 harness（目前是 Codex app-serve
 | 在对话中生成图像 | 实时操作流 | 网络：每个代理 × 每个 Agent API |
 |---|---|---|
 | ![图像生成](docs/img/image-chat-en.png) | ![操作](docs/img/side-actions-en.png) | ![网络](docs/img/side-network-en.png) |
+
+| Agent 互相提问 | 斜杠命令 |
+|---|---|
+| ![Agent](docs/img/agents-en.png) | ![斜杠命令](docs/img/slash-en.png) |
 
 | 工具和 skill | 这个对话可以用什么 |
 |---|---|
@@ -106,7 +115,7 @@ open http://localhost:8088
 
 ## 测试
 
-在真实浏览器中针对运行中的实例做端到端测试（`tests/`）：窗格网格的边界情况、界面导览、图像生成、2FA 启用/登录/停用。见 [tests/README.md](tests/README.md)。
+在真实浏览器中针对运行中的实例做端到端测试（`tests/`）：窗格网格的边界情况、界面导览、输入框（粘贴图片、长文本粘贴、引用）、斜杠命令、跨窗格的 Agent 对话、危险命令的审批、布局与对话链接、丢失消息的恢复、图像生成、2FA 启用/登录/停用。见 [tests/README.md](tests/README.md)。
 
 ## 文档
 

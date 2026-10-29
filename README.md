@@ -17,6 +17,11 @@ Paddock does not ship its own agent. It takes a ready-made harness (today Codex 
 - **Models.** ChatGPT subscription (device-code login right from the UI) and any OpenAI-compatible provider with the Responses API, e.g. [NeuralDeep](https://neuraldeep.ru/docs).
 - **Tools, harness-agnostic.** A Paddock tool is a CLI plus a skill that tells the agent when to call it. Every harness and every model has a shell, so tools work everywhere. First one: image generation and editing (`paddock-images`).
 - **See what each chat can use.** Skills and CLIs available to the session, and which ones the agent actually used.
+- **Agents talk to each other.** The `paddock-agents` tool lets the agent in one pane list your other open chats, read them and message them: hand off work, ask for a review, collect a status from all of them. Messages show up in the receiving pane as *from agent «…»*, the asking pane shows the question and the answer.
+- **Slash commands like the Codex CLI.** `/new`, `/compact`, `/review`, `/diff`, `/init`, `/rename`, `/fork`, `/goal`, `/status`, `/help` and `!command` for a shell command in the chat; typing `/` opens a hint list.
+- **Sub-agents.** Codex sub-agent calls render as cards; Settings → Codex switches on `multi_agent_v2` (list, message, interrupt) for OpenAI models.
+- **Destructive commands always ask.** `rm`, `git push/reset/clean` and friends stop at an approval card whatever the approval policy says (Codex execpolicy rules shipped with the harness).
+- **Links to chats.** The address follows the active chat (`?chat=<id>`); the chat list collapses, the side panel resizes.
 - **A side panel like [agentbelt](https://github.com/vakovalskii/agentbelt).** Files the agent changed, a live action feed with filters and diffs, network health (every proxy × chatgpt.com / api.openai.com / api.neuraldeep.ru), every pane's state (working / waiting for approval / done) and layout snapshots you can restore on any device.
 - **Isolation as a product.** A container per user, `cap_drop: ALL`, no direct internet: egress only through a gost proxy chain with failover; LAN and host are closed.
 - **Login.** Password plus **2FA (TOTP)** with Authy, Google Authenticator or 1Password; trusted-browser option; backup codes.
@@ -26,6 +31,10 @@ Paddock does not ship its own agent. It takes a ready-made harness (today Codex 
 | Image generation in a chat | Live action feed | Network: every proxy × every agent API |
 |---|---|---|
 | ![Image generation](docs/img/image-chat-en.png) | ![Actions](docs/img/side-actions-en.png) | ![Network](docs/img/side-network-en.png) |
+
+| Agents asking each other | Slash commands |
+|---|---|
+| ![Agents](docs/img/agents-en.png) | ![Slash commands](docs/img/slash-en.png) |
 
 | Tools and skills | What this chat can use |
 |---|---|
@@ -106,7 +115,7 @@ open http://localhost:8088
 
 ## Tests
 
-End-to-end in a real browser against a running instance (`tests/`): pane grid edge cases, a UI tour, image generation, 2FA enable/login/disable. See [tests/README.md](tests/README.md).
+End-to-end in a real browser against a running instance (`tests/`): pane grid edge cases, a UI tour, the composer (pasted images, long pastes, quotes), slash commands, agents talking across panes, approvals for destructive commands, layout and chat links, lost-message recovery, image generation, 2FA enable/login/disable. See [tests/README.md](tests/README.md).
 
 ## Docs
 

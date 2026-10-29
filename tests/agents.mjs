@@ -9,7 +9,7 @@ const URL_ = process.env.HUB_URL ?? "http://localhost:8088";
 const browser = await puppeteer.launch({
   executablePath: process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   headless: true,
-  defaultViewport: { width: 1600, height: 1000 },
+  defaultViewport: { width: 1600, height: 1000, deviceScaleFactor: Number(process.env.HUB_DPR ?? 1) },
   protocolTimeout: 600000,
 });
 const page = await browser.newPage();
