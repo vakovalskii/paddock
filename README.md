@@ -115,7 +115,7 @@ open http://localhost:8088
 
 ## Tests
 
-End-to-end in a real browser against a running instance (`tests/`): pane grid edge cases, a UI tour, the composer (pasted images, long pastes, quotes), slash commands, agents talking across panes, approvals for destructive commands, layout and chat links, lost-message recovery, image generation, 2FA enable/login/disable. See [tests/README.md](tests/README.md).
+End-to-end in a real browser against a running instance (`tests/`): pane grid edge cases, a UI tour, the composer (pasted images, long pastes, quotes), slash commands, agents talking across panes, approvals for destructive commands, layout and chat links, lost-message recovery, network drops mid-turn, Stop, phone width, sidebar, settings and snapshots, image generation, 2FA enable/login/disable. All in one go: `node tests/run-all.mjs`. See [tests/README.md](tests/README.md).
 
 ## Docs
 

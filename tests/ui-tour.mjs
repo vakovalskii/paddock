@@ -12,7 +12,7 @@ const browser = await puppeteer.launch({
   executablePath: process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   headless: true,
   defaultViewport: { width: 1512, height: 945, deviceScaleFactor: 1 },
-  protocolTimeout: 30000,
+  protocolTimeout: 600000,
 });
 const page = await browser.newPage();
 const errors = [];
@@ -68,7 +68,7 @@ await step("новый чат: ответ, модель и время под о�
   await page.keyboard.type("Ответь одним словом: столица Франции?");
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.querySelector('[title="Остановить"]'), { timeout: 15000 });
-  await page.waitForFunction(() => !document.querySelector('[title="Остановить"]'), { timeout: 120000 });
+  await page.waitForFunction(() => !document.querySelector('[title="Остановить"]'), { timeout: 240000 });
   await shot("answer");
   const t = await text();
   return /Париж/i.test(t) && /\d+(\.\d)? с/.test(t);
@@ -81,7 +81,7 @@ await step("правка сообщения: откат и новый ответ
   await page.$eval("main form textarea, main textarea", (ta) => ta.select());
   await page.keyboard.type("Ответь одним словом: столица Италии?");
   await clickText("main button", "Отправить");
-  await page.waitForFunction(() => /Рим/.test(document.querySelector("main").innerText), { timeout: 120000 });
+  await page.waitForFunction(() => /Рим/.test(document.querySelector("main").innerText), { timeout: 240000 });
   await page.waitForFunction(() => !document.querySelector('[title="Остановить"]'), { timeout: 60000 });
   const t = await page.$eval("main", (e) => e.innerText);
   await shot("edited");

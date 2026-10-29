@@ -230,6 +230,13 @@ function Diff({ text }: { text: string }) {
 
 // Запросы харнесса к пользователю: разрешить команду/правку, ответить на вопрос MCP-сервера (elicitation).
 export function Approval({ req, onAnswer }: { req: ServerRequest; onAnswer: (r: ServerRequest, result: unknown) => void }) {
+  // The card appears above the composer and pushes it down: a click aimed at the input can land on Allow.
+  // Buttons ignore clicks for a moment after the card shows up.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setArmed(true), 700);
+    return () => clearTimeout(id);
+  }, [req.id]);
   const p = req.params ?? {};
   if (req.method === "mcpServer/elicitation/request") return <Elicitation req={req} onAnswer={onAnswer} />;
   const what = p.command ?? p.reason ?? req.method;
@@ -240,10 +247,10 @@ export function Approval({ req, onAnswer }: { req: ServerRequest; onAnswer: (r: 
       <div className="mb-2 font-medium text-[var(--yellow)]">{t("Codex is asking for permission")}</div>
       <pre className="mb-3 overflow-auto font-mono text-xs whitespace-pre-wrap">{what}</pre>
       {known ? (
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => onAnswer(req, { decision: "accept" })} className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 font-medium text-black">{t("Allow")}</button>
-          <button onClick={() => onAnswer(req, { decision: "acceptForSession" })} className={btn}>{t("For this session")}</button>
-          <button onClick={() => onAnswer(req, { decision: "decline" })} className={btn}>{t("Deny")}</button>
+        <div className={`flex flex-wrap gap-2 transition-opacity ${armed ? "" : "pointer-events-none opacity-60"}`} data-approval-armed={armed || undefined}>
+          <button disabled={!armed} onClick={() => onAnswer(req, { decision: "accept" })} className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 font-medium text-black">{t("Allow")}</button>
+          <button disabled={!armed} onClick={() => onAnswer(req, { decision: "acceptForSession" })} className={btn}>{t("For this session")}</button>
+          <button disabled={!armed} onClick={() => onAnswer(req, { decision: "decline" })} className={btn}>{t("Deny")}</button>
         </div>
       ) : (
         <p className="text-xs text-[var(--muted)]">{t("The UI doesn't support “{method}” requests yet — Codex can add it itself.", { method: req.method })}</p>

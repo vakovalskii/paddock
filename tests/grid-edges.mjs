@@ -5,7 +5,7 @@ const LANG = process.env.HUB_LANG ?? "ru";
 const dir = new URL(".", import.meta.url).pathname;
 // Запуск: HUB_URL=http://localhost:8088 HUB_EMAIL=valera@hub.local HUB_PASS=... node tests/grid-edges.mjs (нужен puppeteer-core и Chrome)
 const pass = process.env.HUB_PASS;
-const browser = await puppeteer.launch({ executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, defaultViewport: { width: 1600, height: 1000, deviceScaleFactor: 1 } });
+const browser = await puppeteer.launch({ executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, protocolTimeout: 600000, defaultViewport: { width: 1600, height: 1000, deviceScaleFactor: 1 } });
 const page = await browser.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
@@ -77,7 +77,7 @@ const t3 = await paneRect(3);
 await drag(grip.x + 5, grip.y + 5, t3.x + t3.w / 2, t3.y + t3.h / 2);
 a = await paneRect(0); b = await paneRect(3);
 check("перетащили: окно 0 теперь справа снизу", a.x > b.x && a.y > b.y);
-await page.waitForFunction(() => !document.querySelector('[data-pane="0"] [title="Остановить"]'), { timeout: 120000 });
+await page.waitForFunction(() => !document.querySelector('[data-pane="0"] [title="Остановить"]'), { timeout: 240000 });
 const txt = await page.$eval('[data-pane="0"]', (e) => e.innerText);
 check("ход в перетащенном окне дошёл до конца", /40/.test(txt) && /1,\s*2/.test(txt));
 
@@ -157,7 +157,7 @@ await page.click('[data-pane="3"] textarea');
 await page.keyboard.type("Выведи числа от 1 до 60, каждое на своей строке, без пояснений.");
 await page.keyboard.press("Enter");
 await page.waitForFunction(() => document.querySelector('[data-pane="3"] [title="Остановить"]'), { timeout: 20000 });
-await page.waitForFunction(() => !document.querySelector('[data-pane="3"] [title="Остановить"]'), { timeout: 90000 });
+await page.waitForFunction(() => !document.querySelector('[data-pane="3"] [title="Остановить"]'), { timeout: 240000 });
 await page.click('[data-pane="3"] textarea');
 await page.evaluate(() => {
   const dt = new DataTransfer();

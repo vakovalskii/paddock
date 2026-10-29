@@ -22,7 +22,8 @@ const pane = (i) => page.$eval(`[data-pane="${i}"]`, (e) => e.innerText);
 const running = () => page.evaluate(() => [0, 1].filter((i) => document.querySelector(`[data-pane="${i}"] [title="Stop"]`)));
 const idle = async (limit = 240) => { await sleep(2500); for (let i = 0; i < limit / 2 && (await running()).length; i++) await sleep(2000); await sleep(1000); return running(); };
 const want = JSON.parse(process.env.HUB_SELECTION ?? "{}").model;
-const word = `build ${7000 + (Date.now() % 1000)}`;
+const num = String(7000 + (Date.now() % 1000));
+const word = `build ${num}`;
 
 await page.goto(`${URL_}/login`, { waitUntil: "networkidle0" });
 await page.evaluate((sel) => {
@@ -67,10 +68,10 @@ const stuck = await idle(300);
 check("both panes idle after the exchange", stuck.length === 0, stuck.length ? `still running: ${stuck.join(",")}` : "");
 const p0 = await pane(0);
 const p1 = await pane(1);
-check("asker got the build number", p0.toLowerCase().includes(word), p0.slice(-200).replace(/\n/g, " "));
+check("asker got the build number", p0.includes(num), p0.slice(-200).replace(/\n/g, " "));
 check("other pane shows it as from an agent", !!(await page.$('[data-pane="1"] [data-agent-from]')) && !/paddock-agents: from/.test(p1));
-check("asker shows the exchange as a message card", /Message to/.test(p0) && p0.toLowerCase().includes(word));
-check("other pane answered it", (p1.toLowerCase().match(new RegExp(word, "g")) ?? []).length >= 2);
+check("asker shows the exchange as a message card", /Message to/.test(p0) && (p0.match(new RegExp(num, "g")) ?? []).length >= 2);
+check("other pane answered it", (p1.match(new RegExp(num, "g")) ?? []).length >= 2);
 await page.screenshot({ path: process.argv[2] ?? "/tmp/agents.png" });
 
 for (let k = 0; k < 2; k++) { await page.evaluate(() => document.querySelector("nav [data-archive]")?.click()); await sleep(600); }

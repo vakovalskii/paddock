@@ -51,7 +51,7 @@ Statuses: ✅ done and verified · 🟡 in progress · ⬜ not started · ❔ ne
 | ✅ 2.9 | **Bug: message not visible in the bottom pane** | after opening a chat the pane was scrolled above the bottom and autoscroll did not kick in; also the bubble appeared only after the server replied. Now we stick to the bottom on open and on send, and show the bubble immediately | `tests/grid-edges.mjs` item 12 |
 | ⬜ 2.5 | **English** | repo, README and docs in English; UI with an RU/EN switch (i18n dictionary, no libraries); a "how it all works" diagram | everything in EN, switch in settings |
 | ✅ 2.6 | **UI rebranding** | "Codex Hub" → "Paddock" in the title, sidebar, login; localStorage keys with migration | "Codex Hub" appears nowhere |
-| ⬜ 2.7 | **Screenshots from real sessions** | EN UI: 1 pane, 4 panes, image generation, settings — `tests/images-and-screens.mjs` | images in the README |
+| ⬜ 2.7 | **Screenshots from real sessions** | EN UI: 1 pane, 4 panes, image generation, settings — `tests/readme-screens.mjs` | images in the README |
 | ⬜ 2.8 | **Public repo `vakovalskii/paddock`** | fresh history without the old commits (they contained a real proxy IP), secret scan, MIT | repo is public |
 
 ## 3. Next — in order
