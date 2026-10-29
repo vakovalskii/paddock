@@ -91,6 +91,11 @@ const ru: Record<string, string> = {
   "opening image…": "открываю картинку…",
   "download": "скачать",
   "Chats": "Чаты",
+  "This chat no longer exists on the server. A message here starts a new chat.": "Этого чата на сервере больше нет. Сообщение здесь начнёт новый чат.",
+  "Could not open the chat: {error}": "Не удалось открыть чат: {error}",
+  "Could not reload the chat after reconnecting: {error}": "После переподключения чат не перечитался: {error}",
+  "Message not sent: {error}": "Сообщение не отправлено: {error}",
+  "models are still loading, try again in a second": "модели ещё загружаются, попробуйте через секунду",
 };
 
 export default ru;

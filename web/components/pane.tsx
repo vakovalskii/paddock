@@ -163,6 +163,11 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     );
   }, []);
 
+  // A line from Paddock itself in the chat: what went wrong, instead of a silently empty pane or a vanished message.
+  const notice = useCallback((text: string) => {
+    setMessages((ms) => [...ms.filter((m) => m.id !== "notice"), { id: "notice", role: "assistant", turnId: "", parts: [{ type: "text", itemId: "notice", text: `⚠️ ${text}` }] }]);
+  }, []);
+
   // Подписка на тред + история ходов. И при открытии, и после переподключения:
   // всё, что пришло, пока связи не было, берём из истории, а не из потерянных событий.
   const hydrate = useCallback(async (id: string) => {
@@ -240,8 +245,8 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     threadId: () => threadIdRef.current,
     notify,
     serverRequest: (req) => setApprovals((a) => [...a, req]),
-    reconnected: () => void (threadIdRef.current && hydrate(threadIdRef.current).catch(() => {})),
-  }), [notify, hydrate]);
+    reconnected: () => void (threadIdRef.current && hydrate(threadIdRef.current).catch((e) => notice(t("Could not reload the chat after reconnecting: {error}", { error: e?.message ?? String(e) })))),
+  }), [notify, hydrate, notice]);
 
   // Автопрокрутка assistant-ui едет за ответом, только если окно уже внизу. После открытия чата высота
   // дорастает (markdown, подсветка, картинки) уже после первой прокрутки, и окно остаётся выше низа —
@@ -260,9 +265,19 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     setMessages([]);
     setUsage(null);
     setApprovals([]);
-    await hydrate(id).catch(() => {});
+    try {
+      await hydrate(id);
+    } catch (e: any) {
+      // The chat's file is gone (deleted sessions, a stale link): the pane becomes a new chat, otherwise every
+      // message sent here would go to a thread that no longer exists and vanish.
+      if (/no rollout found|not found/i.test(e?.message ?? "")) {
+        setThreadId(null);
+        threadIdRef.current = null;
+        notice(t("This chat no longer exists on the server. A message here starts a new chat."));
+      } else notice(t("Could not open the chat: {error}", { error: e?.message ?? String(e) }));
+    }
     toBottom();
-  }, [hydrate, toBottom]);
+  }, [hydrate, toBottom, notice]);
 
   const newThread = useCallback((cwd: string) => {
     setThreadId(null);
@@ -302,19 +317,25 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     setImages([]);
     const parts = (itemId: string): Part[] => [...imgs.map((path, i) => ({ type: "image" as const, itemId: `${itemId}-img${i}`, path })), { type: "text", itemId, text }];
     // Пузырь сообщения сразу, не дожидаясь thread/start и turn/start (в новом чате это секунды); ensureTurn заменит его настоящим.
-    setMessages((ms) => [...ms.filter((m) => m.id !== "u-pending"), { id: "u-pending", role: "user", turnId: "", parts: parts("u-pending") }]);
+    setMessages((ms) => [...ms.filter((m) => m.id !== "u-pending" && m.id !== "notice"), { id: "u-pending", role: "user", turnId: "", parts: parts("u-pending") }]);
     toBottom();
     try {
       await startTurnNow(text, imgs, parts);
-    } catch (e) {
+    } catch (e: any) {
+      // Not sent: the text goes back into the input and the reason is shown, nothing disappears silently.
       setMessages((ms) => ms.filter((m) => m.id !== "u-pending"));
-      throw e;
+      runtime.thread.composer.setText(typed);
+      notice(t("Message not sent: {error}", { error: e?.message ?? String(e) }));
     }
   };
 
   const startTurnNow = async (text: string, imgs: string[] = [], parts: (itemId: string) => Part[] = (itemId) => [{ type: "text", itemId, text }]) => {
+    // No selection yet = model/list has not answered; starting now would put the thread on OpenAI by default.
+    // The bubble is already on screen, so wait for the models a little instead of failing.
+    for (let i = 0; i < 75 && !selRef.current; i++) await new Promise((r) => setTimeout(r, 200));
     const s = selRef.current;
-    const provider = s?.provider ?? "openai";
+    if (!s) throw new Error(t("models are still loading, try again in a second"));
+    const provider = s.provider ?? "openai";
     let tid = threadIdRef.current;
     // Провайдер у Codex задаётся на весь тред — модель другого провайдера продолжает в новом чате той же папки.
     if (tid && threadProvider.current !== provider) {
