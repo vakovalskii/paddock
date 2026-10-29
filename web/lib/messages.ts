@@ -3,7 +3,7 @@
 import type { ThreadMessageLike } from "@assistant-ui/react";
 import { t as tr } from "./i18n";
 
-export type ToolKind = "shell" | "read" | "search" | "list" | "patch" | "mcp" | "web" | "tool";
+export type ToolKind = "shell" | "read" | "search" | "list" | "patch" | "mcp" | "web" | "tool" | "agent";
 export type WebLink = { title: string; url: string | null; domain: string | null; snippet: string | null };
 export type FileEdit = { path: string; kind: "add" | "delete" | "update"; diff: string };
 export type ToolArgs = { kind: ToolKind; title: string; durationMs: number | null; diff: boolean; verb?: string; links?: WebLink[]; files?: FileEdit[] };
@@ -123,6 +123,18 @@ export function itemToPart(item: any): Part | null {
       if (p.type === "tool-call") p.args = { ...p.args, verb, links };
       return p;
     }
+    // Sub-agents (multi_agent): spawn, message, wait, list… The card shows the prompt and each target's last state.
+    case "collabAgentToolCall": {
+      const states = Object.entries(item.agentsStates ?? {}) as [string, { status: string; message: string | null }][];
+      const first = (item.prompt ?? "").split("\n")[0];
+      return tool(item, "agent", [item.tool, first].filter(Boolean).join(" · "), {
+        argsText: [item.prompt, item.model && `model: ${item.model}${item.reasoningEffort ? ` ${item.reasoningEffort}` : ""}`].filter(Boolean).join("\n\n"),
+        result: item.status === "inProgress" ? undefined : states.map(([id, st]) => `${id.slice(0, 8)} ${st.status}${st.message ? `: ${st.message}` : ""}`).join("\n") || item.status,
+        isError: item.status === "failed",
+      });
+    }
+    case "subAgentActivity":
+      return tool(item, "agent", `${item.kind} ${item.agentPath ?? ""}`.trim(), { result: item.model ?? "" });
     default:
       return null;
   }

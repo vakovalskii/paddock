@@ -22,6 +22,7 @@ const kindLook: Record<ToolKind, { label: string; color: string }> = {
   mcp: { label: "mcp", color: "var(--teal)" },
   web: { label: "web", color: "var(--teal)" },
   tool: { label: "tool", color: "var(--muted)" },
+  agent: { label: "agents", color: "var(--teal)" },
 };
 
 const SIDE_DEFAULT = 480;

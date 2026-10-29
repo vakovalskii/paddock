@@ -185,6 +185,7 @@ type CodexConfig = {
   approval_policy: string;
   sandbox_mode: string;
   web_search: string;
+  multi_agent_v2: string;
   developer_instructions: string;
 };
 
@@ -198,6 +199,10 @@ const options = () => ({
     ["danger-full-access", t("full access (the container is the sandbox)")],
     ["workspace-write", t("write to workspace only")],
     ["read-only", t("read-only")],
+  ],
+  multi_agent_v2: [
+    ["off", t("basic: spawn and wait")],
+    ["on", t("v2: also list, message, interrupt (OpenAI models only)")],
   ],
   web_search: [
     ["live", t("live search")],
@@ -221,6 +226,7 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
         approval_policy: typeof c.approval_policy === "string" && c.approval_policy !== "untrusted" ? c.approval_policy : "on-request",
         sandbox_mode: c.sandbox_mode ?? "danger-full-access",
         web_search: c.web_search ?? "live",
+        multi_agent_v2: c.features?.multi_agent_v2 ? "on" : "off",
         developer_instructions: c.developer_instructions ?? "",
       };
       setCfg(v);
@@ -237,7 +243,10 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
   const save = async () => {
     try {
       await request("config/batchWrite", {
-        edits: changed.map((k) => ({ keyPath: k, value: cfg[k] === "" ? null : cfg[k], mergeStrategy: "replace" })),
+        // Feature flags live under [features] as booleans; everything else is a top-level string.
+        edits: changed.map((k) => (k === "multi_agent_v2"
+          ? { keyPath: "features.multi_agent_v2", value: cfg[k] === "on", mergeStrategy: "replace" }
+          : { keyPath: k, value: cfg[k] === "" ? null : cfg[k], mergeStrategy: "replace" })),
         reloadUserConfig: true,
       });
       setInitial(cfg);
@@ -276,6 +285,10 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
         <label className="space-y-1.5">
           <span className="text-xs text-[var(--muted)]">{t("Web search")}</span>
           {select("web_search", options().web_search)}
+        </label>
+        <label className="space-y-1.5">
+          <span className="text-xs text-[var(--muted)]">{t("Sub-agents")}</span>
+          {select("multi_agent_v2", options().multi_agent_v2)}
         </label>
       </div>
       <label className="block space-y-1.5">

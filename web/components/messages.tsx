@@ -128,6 +128,7 @@ const toolLook: Record<ToolArgs["kind"], { icon: IconName; label: string; tint: 
   mcp: { icon: "plug", label: "MCP", tint: "var(--pink)" },
   web: { icon: "globe", label: "Web", tint: "var(--yellow)" },
   tool: { icon: "wrench", label: "Tool", tint: "var(--pink)" },
+  agent: { icon: "sparkle", label: "Agent", tint: "var(--teal)" },
 };
 
 function ToolCard({ args, argsText, result, isError }: ToolCallMessagePartProps) {

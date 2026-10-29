@@ -119,6 +119,9 @@ const ru: Record<string, string> = {
   "daily peak": "пик за день",
   "day streak": "дней подряд",
   "loading usage…": "загружаю расход…",
+  "Sub-agents": "Субагенты",
+  "basic: spawn and wait": "базовые: запустить и дождаться",
+  "v2: also list, message, interrupt (OpenAI models only)": "v2: ещё список, сообщения, прерывание (только модели OpenAI)",
 };
 
 export default ru;
