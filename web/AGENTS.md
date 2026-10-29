@@ -1,22 +1,22 @@
-# Paddock web — инструкция для агента
+# Paddock web — instructions for the agent
 
-Это морда, через которую с тобой разговаривает пользователь. Ты можешь её менять.
+This is the web UI through which the user talks to you. You are allowed to change it.
 
-## Стек
-Next.js (App Router) + assistant-ui + Better Auth (SQLite). Вход: `server.ts` — HTTP + WebSocket-мост `/ws/codex` к твоему app-server. Протокол app-server: `codex app-server generate-ts --out /tmp/ts`.
+## Stack
+Next.js (App Router) + assistant-ui + Better Auth (SQLite). Entry point: `server.ts` — HTTP plus the `/ws/codex` WebSocket bridge to your app-server. App-server protocol: `codex app-server generate-ts --out /tmp/ts`.
 
-- `components/chat.tsx` — чат, список тредов, карточки инструментов и подтверждений
-- `lib/codex-client.ts` — JSON-RPC клиент, `lib/messages.ts` — перевод событий в сообщения
-- `lib/auth.ts`, `app/login` — вход; регистрации нет
+- `components/chat.tsx` — chat, thread list, tool and approval cards
+- `lib/codex-client.ts` — JSON-RPC client; `lib/messages.ts` — turns events into messages
+- `lib/auth.ts`, `app/login` — login; there is no sign-up
 
-## Как выкатить
-1. Правь файлы в этой папке.
-2. Проверь сборку у себя: `npm ci && npm run build` (npm ходит через прокси, это нормально).
-3. Попроси выкатку: `date +%s > .deploy-request`.
-4. Через 1–3 минуты смотри `.deploy-status`: `deployed …`, `build FAILED …` или `rolled back …`.
+## How to deploy
+1. Edit files in this folder.
+2. Check the build locally: `npm ci && npm run build` (npm goes through the proxy, that is expected).
+3. Request a deploy: `date +%s > .deploy-request`.
+4. After 1–3 minutes, check `.deploy-status`: `deployed …`, `build FAILED …` or `rolled back …`.
 
-Супервизор переключает трафик только на сборку, которая поднялась и отвечает на `/login`. Если сломается, останется прежняя версия, так что пользователь не потеряет связь с тобой.
+The supervisor only switches traffic to a build that started and answers on `/login`. If something breaks, the previous version stays live, so the user does not lose the connection to you.
 
-## Нельзя
-- Убирать проверку сессии или Origin в `server.ts` и отдавать капабилити-токены в браузер.
-- Включать регистрацию.
+## Do not
+- Remove the session or Origin check in `server.ts`, or expose capability tokens to the browser.
+- Enable sign-up.

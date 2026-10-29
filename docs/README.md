@@ -1,20 +1,20 @@
 ---
 node_type: index
-title: docs — база знаний Paddock
-description: "Точка входа в документацию: архитектура, харнессы, сервисы, решения, runbook'и, план."
+title: docs — Paddock knowledge base
+description: "Entry point to the documentation: architecture, harnesses, services, decisions, runbooks, plan."
 service: _platform
 status: active
 updated: 2026-10-29
 ---
 
-# docs — база знаний Paddock
+# docs — Paddock knowledge base
 
-Устроена по подходу [OntoShip](https://github.com/vakovalskii/ontoship): markdown + `README`-индекс в каждой папке + git.
-У каждого документа frontmatter с `node_type`, ссылки типизированы.
+Organized the [OntoShip](https://github.com/vakovalskii/ontoship) way: markdown + a `README` index in every folder + git.
+Every document has frontmatter with `node_type`; links are typed.
 
-- [reference/architecture.md](reference/architecture.md) — схема связки, изоляция, где лежит состояние
-- [reference/harness-protocol.md](reference/harness-protocol.md) — протокол морды, адаптеры, смена харнессов
-- [services/](services/README.md) — по сервису на папку: web, egress, harness, edge
-- [decisions/](decisions/README.md) — архитектурные решения (ADR)
-- [ops/](ops/README.md) — выкатка, новый пользователь, ловушки
-- [plans/roadmap.md](plans/roadmap.md) — что сделано, что в работе, что дальше
+- [reference/architecture.md](reference/architecture.md) — how the pieces connect, isolation, where state lives
+- [reference/harness-protocol.md](reference/harness-protocol.md) — the web UI protocol, adapters, switching harnesses
+- [services/](services/README.md) — one folder per service: web, egress, harness, edge
+- [decisions/](decisions/README.md) — architecture decision records (ADR)
+- [ops/](ops/README.md) — deploy, new user, gotchas
+- [plans/roadmap.md](plans/roadmap.md) — what is done, what is in progress, what is next

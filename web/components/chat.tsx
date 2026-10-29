@@ -76,7 +76,7 @@ function Workspace({ email }: { email: string }) {
     // После thread/revert codex 0.165 отдаёт тред дважды (старое и новое превью) — оставляем первую, свежую запись.
     const seen = new Set<string>();
     const fresh = res.data.filter((t: any) => !seen.has(t.id) && seen.add(t.id));
-    setThreads(fresh.map((th: any) => ({ id: th.id, title: th.name || th.preview || t("без названия"), updatedAt: th.updatedAt })));
+    setThreads(fresh.map((th: any) => ({ id: th.id, title: th.name || th.preview || t("untitled"), updatedAt: th.updatedAt })));
   }, []);
 
   const loadAccount = useCallback(async () => {
@@ -106,13 +106,13 @@ function Workspace({ email }: { email: string }) {
     }
     const r = await fetch("/api/neuraldeep/models", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key }) });
     const j = await r.json();
-    if (!r.ok) throw new Error(j.error ?? t("ошибка {status}", { status: r.status }));
+    if (!r.ok) throw new Error(j.error ?? t("error {status}", { status: r.status }));
     const efforts = ["low", "medium", "high"].map((e) => ({ reasoningEffort: e, description: "" }));
     setNdModels(j.models.map((m: { id: string; context: number | null; reasoning: boolean }) => ({
       id: m.id,
       model: m.id,
       displayName: m.id,
-      description: m.context ? t("{k}k контекста", { k: Math.round(m.context / 1000) }) + (m.reasoning ? "" : t(" · без рассуждений")) : "",
+      description: m.context ? t("{k}k context", { k: Math.round(m.context / 1000) }) + (m.reasoning ? "" : t(" · no reasoning")) : "",
       isDefault: false,
       defaultReasoningEffort: m.reasoning ? "medium" : "",
       supportedReasoningEfforts: m.reasoning ? efforts : [],
@@ -339,7 +339,7 @@ function Workspace({ email }: { email: string }) {
     const abs = path.startsWith("/") ? path : `${act.cwd ?? CWD}/${path}`;
     const r = await client.current!.request("fs/readFile", { path: abs });
     const bytes = Uint8Array.from(atob(r.dataBase64), (ch) => ch.charCodeAt(0));
-    if (bytes.length > 512 * 1024) return t("(файл больше 512 КБ, не показываю)");
+    if (bytes.length > 512 * 1024) return t("(file is larger than 512 KB, not shown)");
     return new TextDecoder().decode(bytes);
   }, [act.cwd]);
 
@@ -405,7 +405,7 @@ function Workspace({ email }: { email: string }) {
       <main className="relative flex min-w-0 flex-1 flex-col">
         {stale && (
           <button onClick={() => location.reload()} className="absolute left-1/2 top-14 z-20 -translate-x-1/2 rounded-full border border-[var(--accent)]/50 bg-[var(--panel)] px-4 py-1.5 text-sm shadow-xl shadow-black/40 hover:bg-[var(--panel-2)]">
-            <span className="text-[var(--accent)]">●</span> {t("Вышла новая версия — обновить")}
+            <span className="text-[var(--accent)]">●</span> {t("New version available — reload")}
           </button>
         )}
 
@@ -416,14 +416,14 @@ function Workspace({ email }: { email: string }) {
                 <button key={i} onClick={() => setActivePane(i)} title={`Alt+${i + 1}`}
                   className={`flex max-w-[16rem] items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-xs ${i === activePane ? "bg-[var(--panel)] text-[var(--fg)]" : "text-[var(--muted)] hover:bg-[var(--panel)]"}`}>
                   <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${states[i].running ? "animate-pulse bg-[var(--accent)]" : states[i].threadId ? "bg-[var(--green)]" : "bg-[var(--faint)]"}`} />
-                  <span className="truncate">{titleOf(states[i].threadId) ?? t("Новый чат")}</span>
-                  <span className="font-mono text-[10px] text-[var(--faint)]">{states[i].running ? t("работает") : t("готов")} ⌥{i + 1}</span>
+                  <span className="truncate">{titleOf(states[i].threadId) ?? t("New chat")}</span>
+                  <span className="font-mono text-[10px] text-[var(--faint)]">{states[i].running ? t("working") : t("done")} ⌥{i + 1}</span>
                 </button>
               ))}
             </div>
           )}
           <span className="flex-1" />
-          <div className="flex items-center rounded-lg bg-[var(--panel)] p-0.5" title={t("Сколько чатов на экране")}>
+          <div className="flex items-center rounded-lg bg-[var(--panel)] p-0.5" title={t("Chats on screen")}>
             {([1, 2, 4] as const).map((l) => (
               <button key={l} onClick={() => switchLayout(l)}
                 className={`grid h-7 w-8 place-items-center rounded-md ${layout === l ? "bg-[var(--panel-2)] text-[var(--accent)]" : "text-[var(--faint)] hover:text-[var(--fg)]"}`}>
@@ -434,23 +434,23 @@ function Workspace({ email }: { email: string }) {
           <button
             onClick={() => setFilesOpen((o) => !o)}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm hover:bg-[var(--panel)] ${filesOpen ? "bg-[var(--panel)] text-[var(--fg)]" : "text-[var(--muted)]"}`}
-            title={t("Панель: файлы, действия агента, сеть, сессии")}
+            title={t("Panel: files, agent actions, network, sessions")}
             data-side-toggle
           >
             <Icon name="file" size={15} className="text-[var(--teal)]" />
-            {t("Панель")}
+            {t("Panel")}
             {act.files.length > 0 && <span className="rounded-md bg-[var(--panel-2)] px-1.5 font-mono text-[11px] text-[var(--teal)]">{act.files.length}</span>}
-            {states.some((s) => s.waiting) && <span className="h-1.5 w-1.5 rounded-full bg-[var(--yellow)] shadow-[0_0_6px_var(--yellow)]" title={t("Агент ждёт разрешения")} />}
+            {states.some((s) => s.waiting) && <span className="h-1.5 w-1.5 rounded-full bg-[var(--yellow)] shadow-[0_0_6px_var(--yellow)]" title={t("Agent is waiting for approval")} />}
           </button>
         </div>
 
         <div ref={gridRef} className="relative grid min-h-0 flex-1" style={gridStyle}>
           {layout !== 1 && (
-            <div onPointerDown={startResize("col")} onDoubleClick={() => setCol(0.5)} data-splitter="col" title={t("Тяни, чтобы изменить ширину; двойной клик — поровну")}
+            <div onPointerDown={startResize("col")} onDoubleClick={() => setCol(0.5)} data-splitter="col" title={t("Drag to resize width; double-click to split evenly")}
               className="relative z-10 cursor-col-resize bg-[var(--border)]/60 hover:bg-[var(--accent)]/60" style={{ gridColumn: 2, gridRow: "1 / -1" }} />
           )}
           {layout === 4 && (
-            <div onPointerDown={startResize("row")} onDoubleClick={() => setRow(0.5)} data-splitter="row" title={t("Тяни, чтобы изменить высоту; двойной клик — поровну")}
+            <div onPointerDown={startResize("row")} onDoubleClick={() => setRow(0.5)} data-splitter="row" title={t("Drag to resize height; double-click to split evenly")}
               className="relative z-10 cursor-row-resize bg-[var(--border)]/60 hover:bg-[var(--accent)]/60" style={{ gridRow: 2, gridColumn: "1 / -1" }} />
           )}
           {handles.map((h, i) => {
@@ -489,7 +489,7 @@ function Workspace({ email }: { email: string }) {
       {drag && (
         <div className="pointer-events-none fixed z-50 rounded-lg border border-[var(--accent)]/60 bg-[var(--panel)] px-3 py-1.5 text-sm shadow-2xl shadow-black/60"
           style={{ left: drag.x + 12, top: drag.y + 12 }}>
-          {titleOf(states[drag.pane].threadId) ?? t("Новый чат")}
+          {titleOf(states[drag.pane].threadId) ?? t("New chat")}
         </div>
       )}
       {settingsOpen && <Settings email={email} account={account} models={models} ndModels={ndModels} reloadNeuralDeep={loadNeuralDeep} request={request} loginEvent={loginEvent} onClose={() => setSettingsOpen(false)} />}

@@ -67,7 +67,7 @@ function commandPart(item: any): Part {
   const extra = { result, isError: item.exitCode != null && item.exitCode !== 0, argsText: cmd };
   const only = (t: string) => actions.length > 0 && actions.every((a) => a.type === t);
   if (only("read")) return tool(item, "read", actions.map((a) => a.name ?? a.path).join(", "), extra);
-  if (only("search")) return tool(item, "search", actions.map((a) => [a.query, a.path && tr("в {path}", { path: a.path })].filter(Boolean).join(" ")).join(", "), extra);
+  if (only("search")) return tool(item, "search", actions.map((a) => [a.query, a.path && tr("in {path}", { path: a.path })].filter(Boolean).join(" ")).join(", "), extra);
   if (only("listFiles")) return tool(item, "list", actions.map((a) => a.path ?? ".").join(", "), extra);
   return tool(item, "shell", cmd.split("\n")[0], extra);
 }
@@ -87,7 +87,7 @@ export function itemToPart(item: any): Part | null {
     case "reasoning":
       return { type: "reasoning", itemId: item.id, text: (item.summary ?? []).join("\n\n") };
     case "contextCompaction":
-      return { type: "reasoning", itemId: item.id, text: tr("Контекст сжат") };
+      return { type: "reasoning", itemId: item.id, text: tr("Context compacted") };
     case "commandExecution":
       return commandPart(item);
     case "fileChange": {
@@ -117,7 +117,7 @@ export function itemToPart(item: any): Part | null {
     case "webSearch": {
       const a = item.action ?? {};
       const verb = a.type === "openPage" ? "Open" : a.type === "findInPage" ? "Find" : "Search";
-      const title = a.type === "openPage" ? a.url : a.type === "findInPage" ? tr("{pattern} в {url}", { pattern: a.pattern ?? "", url: a.url ?? "" }) : a.query ?? a.queries?.join(", ") ?? item.query;
+      const title = a.type === "openPage" ? a.url : a.type === "findInPage" ? tr("{pattern} in {url}", { pattern: a.pattern ?? "", url: a.url ?? "" }) : a.query ?? a.queries?.join(", ") ?? item.query;
       const links: WebLink[] = (item.results ?? []).map((r: any) => ({ title: r.title ?? r.url ?? "", url: r.url ?? null, domain: r.domain ?? null, snippet: r.snippet ?? null }));
       const p = tool(item, "web", title ?? item.query ?? "", { result: item.results == null ? undefined : `${links.length}` });
       if (p.type === "tool-call") p.args = { ...p.args, verb, links };
@@ -149,7 +149,7 @@ export function turnsToMessages(turns: any[], meta: (turnId: string) => TurnMeta
         if (p) parts.push(p);
       }
     }
-    if (turn.error) parts.push({ type: "text", itemId: `err-${turn.id}`, text: `⚠️ ${turn.error.message ?? tr("ошибка хода")}` });
+    if (turn.error) parts.push({ type: "text", itemId: `err-${turn.id}`, text: `⚠️ ${turn.error.message ?? tr("turn failed")}` });
     const running = turn.status === "inProgress";
     out.push({
       id: `a-${turn.id}`,

@@ -38,10 +38,10 @@ export function SidePanel({ tab, setTab, act, states, visible, activePane, title
   onClose: () => void;
 }) {
   const tabs: [SideTab, string, number | null][] = [
-    ["files", t("Файлы"), act.files.length || null],
-    ["actions", t("Действия"), act.actions.length || null],
-    ["net", t("Сеть"), null],
-    ["sessions", t("Сессии"), states.filter((s) => s.running).length || null],
+    ["files", t("Files"), act.files.length || null],
+    ["actions", t("Actions"), act.actions.length || null],
+    ["net", t("Network"), null],
+    ["sessions", t("Sessions"), states.filter((s) => s.running).length || null],
   ];
   return (
     <aside className="fixed inset-y-0 right-0 z-20 flex w-full max-w-[34rem] flex-col border-l border-[var(--border)] bg-[var(--sidebar)] lg:static lg:w-[30rem]">
@@ -54,7 +54,7 @@ export function SidePanel({ tab, setTab, act, states, visible, activePane, title
           </button>
         ))}
         <span className="flex-1" />
-        <button onClick={onClose} className="rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--panel)]" title={t("Закрыть")}>
+        <button onClick={onClose} className="rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--panel)]" title={t("Close")}>
           <Icon name="plus" size={16} className="rotate-45" />
         </button>
       </div>
@@ -81,10 +81,10 @@ function ActionsTab({ act, title }: { act: PaneState; title: string | null }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="space-y-2 border-b border-[var(--border)]/60 px-3 py-2.5">
-        <div className="truncate text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{title ?? t("Новый чат")}</div>
+        <div className="truncate text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{title ?? t("New chat")}</div>
         <div className="font-mono text-[11.5px] text-[var(--muted)]">
-          {act.running ? <span className="text-[var(--accent)]">{t("работает")}</span> : act.waiting ? <span className="text-[var(--yellow)]">{t("ждёт разрешения")}</span> : t("готов")}
-          {" · "}{t("действий {n}", { n: act.actions.length })}{failed > 0 && <span className="text-[var(--red)]"> · {t("упало {n}", { n: failed })}</span>}
+          {act.running ? <span className="text-[var(--accent)]">{t("working")}</span> : act.waiting ? <span className="text-[var(--yellow)]">{t("waiting for approval")}</span> : t("done")}
+          {" · "}{t("{n} actions", { n: act.actions.length })}{failed > 0 && <span className="text-[var(--red)]"> · {t("{n} failed", { n: failed })}</span>}
         </div>
         <div className="flex flex-wrap gap-1">
           {([["all", act.actions.length], ...counts] as [ToolKind | "all", number][]).map(([k, n]) => (
@@ -96,7 +96,7 @@ function ActionsTab({ act, title }: { act: PaneState; title: string | null }) {
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto py-1 font-mono text-[12px]">
-        {list.length === 0 && <p className="px-3 py-3 font-sans text-sm text-[var(--faint)]">{t("Агент в этом чате пока ничего не запускал.")}</p>}
+        {list.length === 0 && <p className="px-3 py-3 font-sans text-sm text-[var(--faint)]">{t("The agent hasn't run anything in this chat yet.")}</p>}
         {list.map((a) => <ActionRow key={a.id} a={a} open={open === a.id} toggle={() => setOpen(open === a.id ? null : a.id)} />)}
       </div>
     </div>
@@ -122,7 +122,7 @@ function ActionRow({ a, open, toggle }: { a: Action; open: boolean; toggle: () =
           {body ? body.split("\n").map((l, i) => {
             const c = !a.diff ? "text-[var(--muted)]" : l.startsWith("+") ? "text-[var(--green)]" : l.startsWith("-") ? "text-[var(--red)]" : l.startsWith("@@") ? "text-[var(--blue)]" : "text-[var(--muted)]";
             return <div key={i} className={`whitespace-pre-wrap break-words ${c}`}>{l || " "}</div>;
-          }) : <span className="text-[var(--faint)]">{t("(без вывода)")}</span>}
+          }) : <span className="text-[var(--faint)]">{t("(no output)")}</span>}
         </pre>
       )}
     </div>
@@ -151,36 +151,36 @@ function NetTab() {
   const cell = (p: Probe | undefined) =>
     !p ? <span className="text-[var(--faint)]">—</span>
       : p.state === "dead" ? <span className="text-[var(--red)]">dead</span>
-      : p.state === "blocked" ? <span className="text-[var(--yellow)]" title={t("403: доступ закрыт по региону")}>403 {p.ms}ms</span>
+      : p.state === "blocked" ? <span className="text-[var(--yellow)]" title={t("403: blocked in this region")}>403 {p.ms}ms</span>
       : <span className={p.ms! > 1500 ? "text-[var(--yellow)]" : "text-[var(--green)]"}>{p.ms}ms</span>;
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto p-3 text-[12.5px]">
       <div className="mb-2 flex items-center gap-2">
-        <span className="flex-1 text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Сеть агентов")}</span>
-        <button onClick={() => load(true)} disabled={busy} className="rounded-md p-1 text-[var(--muted)] hover:bg-[var(--panel)] disabled:opacity-40" title={t("Проверить сейчас")}>
+        <span className="flex-1 text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Agent network")}</span>
+        <button onClick={() => load(true)} disabled={busy} className="rounded-md p-1 text-[var(--muted)] hover:bg-[var(--panel)] disabled:opacity-40" title={t("Check now")}>
           <Icon name="refresh" size={13} className={busy ? "animate-spin" : ""} />
         </button>
       </div>
       {error && <p className="text-sm text-[var(--red)]">{error}</p>}
-      {!net && !error && <p className="text-sm text-[var(--faint)]">{t("проверяю каждый прокси…")}</p>}
+      {!net && !error && <p className="text-sm text-[var(--faint)]">{t("checking each proxy…")}</p>}
       {net && (
         <>
           {net.exit && (
             <p className="mb-3 font-mono text-[12px] text-[var(--muted)]">
-              {t("агенты → egress →")} <span className="text-[var(--fg)]">{net.exit.country ?? "?"}</span>{net.exit.org && <span className="text-[var(--faint)]"> · {net.exit.org.replace(/^AS\d+\s*/, "")}</span>} <span className="text-[var(--green)]">✓ {net.exit.ms}ms</span>
+              {t("agents → egress →")} <span className="text-[var(--fg)]">{net.exit.country ?? "?"}</span>{net.exit.org && <span className="text-[var(--faint)]"> · {net.exit.org.replace(/^AS\d+\s*/, "")}</span>} <span className="text-[var(--green)]">✓ {net.exit.ms}ms</span>
             </p>
           )}
           <table className="w-full font-mono text-[12px]">
             <thead>
               <tr className="text-left text-[var(--faint)]">
-                <th className="pb-1 font-normal">{t("прокси")}</th>
+                <th className="pb-1 font-normal">{t("proxy")}</th>
                 {endpoints.map(([id, label]) => <th key={id} className="pb-1 font-normal">{label}</th>)}
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-[var(--border)]/60">
-                <td className="py-1 text-[var(--accent)]" title={t("Цепочка с failover: так ходят агенты")}>● {t("цепочка")}</td>
+                <td className="py-1 text-[var(--accent)]" title={t("Failover chain: this is how agents connect")}>● {t("chain")}</td>
                 {endpoints.map(([id]) => <td key={id}>{cell(net.chain[id])}</td>)}
               </tr>
               {net.proxies.map((p, i) => {
@@ -195,8 +195,8 @@ function NetTab() {
             </tbody>
           </table>
           <p className="mt-3 text-[11px] leading-snug text-[var(--faint)]">
-            {t("Проверено в {time} с сервера, раз в минуту.", { time: new Date(net.checkedAt).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" }) })}
-            {" "}{t("401/404 без ключа = API доступен; 403 — блок по региону; dead — прокси не отвечает. Порядок и адреса прокси — Настройки → Прокси (админ).")}
+            {t("Checked at {time} from the server, every minute.", { time: new Date(net.checkedAt).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" }) })}
+            {" "}{t("401/404 without a key = API reachable; 403 = region block; dead = proxy not responding. Proxy order and addresses: Settings → Proxy (admin).")}
           </p>
         </>
       )}
@@ -221,7 +221,7 @@ function SessionsTab({ states, visible, activePane, titleOf, onFocusPane, snapsh
 
   const save = async () => {
     const data = snapshotNow();
-    const label = name.trim() || t("снимок {date}", { date: new Date().toLocaleString(locale(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) });
+    const label = name.trim() || t("snapshot {date}", { date: new Date().toLocaleString(locale(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) });
     await fetch("/api/snapshots", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: label, data }) });
     setName("");
     load();
@@ -232,12 +232,12 @@ function SessionsTab({ states, visible, activePane, titleOf, onFocusPane, snapsh
   };
 
   const status = (s: PaneState) =>
-    s.waiting ? { text: t("ждёт разрешения"), color: "var(--yellow)" } : s.running ? { text: t("работает"), color: "var(--accent)" } : s.threadId ? { text: t("готов"), color: "var(--green)" } : { text: t("пусто"), color: "var(--faint)" };
+    s.waiting ? { text: t("waiting for approval"), color: "var(--yellow)" } : s.running ? { text: t("working"), color: "var(--accent)" } : s.threadId ? { text: t("done"), color: "var(--green)" } : { text: t("empty"), color: "var(--faint)" };
 
   return (
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3 text-[13px]">
       <section className="space-y-1.5">
-        <div className="text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Окна")}</div>
+        <div className="text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Panes")}</div>
         {states.map((s, i) => {
           const st = status(s);
           const shown = visible.includes(i);
@@ -246,9 +246,9 @@ function SessionsTab({ states, visible, activePane, titleOf, onFocusPane, snapsh
               className={`flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left ${i === activePane ? "border-[var(--accent)]/60 bg-[var(--panel)]" : "border-[var(--border)] hover:bg-[var(--panel)]"} ${shown ? "" : "opacity-60"}`}>
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: st.color, boxShadow: s.running || s.waiting ? `0 0 6px ${st.color}` : undefined }} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate">{titleOf(s.threadId) ?? t("Новый чат")}</span>
+                <span className="block truncate">{titleOf(s.threadId) ?? t("New chat")}</span>
                 <span className="block truncate font-mono text-[11px] text-[var(--faint)]">
-                  <span style={{ color: st.color }}>{st.text}</span> · {s.model ?? "—"} · {(s.cwd ?? "").replace(/^\/workspace\/?/, "~/") || "~/"} · {t("действий {n}", { n: s.actions.length })}
+                  <span style={{ color: st.color }}>{st.text}</span> · {s.model ?? "—"} · {(s.cwd ?? "").replace(/^\/workspace\/?/, "~/") || "~/"} · {t("{n} actions", { n: s.actions.length })}
                 </span>
               </span>
               <span className="font-mono text-[10.5px] text-[var(--faint)]">⌥{i + 1}</span>
@@ -258,25 +258,25 @@ function SessionsTab({ states, visible, activePane, titleOf, onFocusPane, snapsh
       </section>
 
       <section className="space-y-2">
-        <div className="text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Снимки раскладок")}</div>
+        <div className="text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Layout snapshots")}</div>
         <form onSubmit={(e) => { e.preventDefault(); void save(); }} className="flex gap-2">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("название, например «релиз»")}
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name, e.g. “release”")}
             className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] px-2.5 py-1.5 text-sm outline-none focus:border-[var(--accent)]/50" />
-          <button className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm hover:bg-[var(--panel-2)]">{t("Сохранить")}</button>
+          <button className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm hover:bg-[var(--panel-2)]">{t("Save")}</button>
         </form>
-        {snaps?.length === 0 && <p className="text-xs text-[var(--faint)]">{t("Снимок запоминает, сколько окон, какие чаты в них и где границы. Восстановить — одним кликом, на любом устройстве.")}</p>}
+        {snaps?.length === 0 && <p className="text-xs text-[var(--faint)]">{t("A layout snapshot remembers how many panes you have, which chats are in them and where the splits are. Restore it in one click, on any device.")}</p>}
         {snaps?.map((sn) => (
           <div key={sn.id} className="rounded-xl border border-[var(--border)] p-2.5">
             <div className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate font-medium">{sn.name}</span>
-              <button onClick={() => restore(sn.data)} className="rounded-md px-2 py-0.5 text-xs text-[var(--accent)] hover:bg-[var(--panel-2)]">{t("Восстановить")}</button>
-              <button onClick={() => remove(sn.id)} className="rounded-md p-1 text-[var(--faint)] hover:bg-[var(--panel-2)] hover:text-[var(--red)]" title={t("Удалить")}>
+              <button onClick={() => restore(sn.data)} className="rounded-md px-2 py-0.5 text-xs text-[var(--accent)] hover:bg-[var(--panel-2)]">{t("Restore")}</button>
+              <button onClick={() => remove(sn.id)} className="rounded-md p-1 text-[var(--faint)] hover:bg-[var(--panel-2)] hover:text-[var(--red)]" title={t("Remove")}>
                 <Icon name="plus" size={13} className="rotate-45" />
               </button>
             </div>
             <div className="mt-1.5 flex flex-wrap gap-1">
               {(sn.data.layout === 1 ? [sn.data.threads[sn.data.active]] : sn.data.slots.slice(0, sn.data.layout).map((i) => sn.data.threads[i])).map((th, i) => (
-                <span key={i} className="max-w-[13rem] truncate rounded-md bg-[var(--panel-2)] px-1.5 py-0.5 text-[11px] text-[var(--muted)]">{titleOf(th) ?? t("пусто")}</span>
+                <span key={i} className="max-w-[13rem] truncate rounded-md bg-[var(--panel-2)] px-1.5 py-0.5 text-[11px] text-[var(--muted)]">{titleOf(th) ?? t("empty")}</span>
               ))}
             </div>
           </div>

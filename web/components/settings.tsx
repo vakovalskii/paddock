@@ -34,21 +34,21 @@ export function Settings({ email, account, models, ndModels, reloadNeuralDeep, r
   }, [onClose]);
 
   const tabs = [
-    ["account", "Аккаунт ChatGPT"],
+    ["account", "ChatGPT account"],
     ["neuraldeep", "NeuralDeep"],
-    ["tools", "Инструменты"],
+    ["tools", "Tools"],
     ["codex", "Codex"],
-    ["proxy", "Прокси"],
-    ["web", "Вход в морду"],
+    ["proxy", "Proxies"],
+    ["web", "Paddock login"],
   ] as const;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)] shadow-2xl shadow-black/60">
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-3.5">
-          <span className="font-semibold">{t("Настройки")}</span>
+          <span className="font-semibold">{t("Settings")}</span>
           <span className="flex-1" />
-          <button onClick={onClose} className="rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--panel-2)]" title={t("Закрыть")}>
+          <button onClick={onClose} className="rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--panel-2)]" title={t("Close")}>
             <Icon name="plus" size={16} className="rotate-45" />
           </button>
         </div>
@@ -83,7 +83,7 @@ function AccountTab({ account, request, loginEvent }: { account: AccountInfo | n
   useEffect(() => {
     if (!flow || !loginEvent || (loginEvent.loginId && loginEvent.loginId !== flow.loginId)) return;
     setFlow(null);
-    setStatus(loginEvent.success ? { ok: true, text: t("Вход выполнен") } : { ok: false, text: loginEvent.error ?? t("Вход не удался") });
+    setStatus(loginEvent.success ? { ok: true, text: t("Signed in") } : { ok: false, text: loginEvent.error ?? t("Sign-in failed") });
   }, [loginEvent, flow]);
 
   const startDevice = async () => {
@@ -92,7 +92,7 @@ function AccountTab({ account, request, loginEvent }: { account: AccountInfo | n
       const r = await request("account/login/start", { type: "chatgptDeviceCode" });
       setFlow({ loginId: r.loginId, url: r.verificationUrl, code: r.userCode });
     } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : t("не удалось начать вход") });
+      setStatus({ ok: false, text: e instanceof Error ? e.message : t("couldn't start sign-in") });
     }
   };
 
@@ -105,16 +105,16 @@ function AccountTab({ account, request, loginEvent }: { account: AccountInfo | n
     try {
       await request("account/login/start", { type: "apiKey", apiKey: apiKey.trim() });
       setApiKey("");
-      setStatus({ ok: true, text: t("API-ключ сохранён") });
+      setStatus({ ok: true, text: t("API key saved") });
     } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : t("ключ не принят") });
+      setStatus({ ok: false, text: e instanceof Error ? e.message : t("key rejected") });
     }
   };
 
   const logout = async () => {
     await request("account/logout", undefined);
     setConfirmLogout(false);
-    setStatus({ ok: true, text: t("Вышли из аккаунта") });
+    setStatus({ ok: true, text: t("Signed out") });
   };
 
   return (
@@ -122,56 +122,56 @@ function AccountTab({ account, request, loginEvent }: { account: AccountInfo | n
       <section className="flex items-center gap-3 rounded-xl bg-[var(--panel-2)] p-4">
         <span className={`h-2 w-2 shrink-0 rounded-full ${account?.email || account?.plan ? "bg-[var(--green)]" : "bg-[var(--red)]"}`} />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-mono text-sm">{account?.email ? maskEmail(account.email) : account?.plan ? t("аккаунт подключён") : t("не подключён")}</div>
-          {account?.plan && <div className="text-xs text-[var(--muted)]">{t("план")} <span className="font-mono text-[var(--accent)]">{account.plan}</span></div>}
+          <div className="truncate font-mono text-sm">{account?.email ? maskEmail(account.email) : account?.plan ? t("account connected") : t("not connected")}</div>
+          {account?.plan && <div className="text-xs text-[var(--muted)]">{t("plan")} <span className="font-mono text-[var(--accent)]">{account.plan}</span></div>}
         </div>
-        {(account?.email || account?.plan) && !confirmLogout && <button onClick={() => setConfirmLogout(true)} className={secondary}>{t("Выйти")}</button>}
+        {(account?.email || account?.plan) && !confirmLogout && <button onClick={() => setConfirmLogout(true)} className={secondary}>{t("Sign out")}</button>}
         {confirmLogout && (
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-[var(--muted)]">{t("Codex перестанет отвечать до нового входа.")}</span>
-            <button onClick={logout} className="rounded-lg bg-[var(--red)] px-2.5 py-1 font-medium text-black">{t("Выйти")}</button>
-            <button onClick={() => setConfirmLogout(false)} className="rounded-lg px-2 py-1 text-[var(--muted)] hover:bg-[var(--panel)]">{t("Нет")}</button>
+            <span className="text-[var(--muted)]">{t("Codex will stop responding until you sign in again.")}</span>
+            <button onClick={logout} className="rounded-lg bg-[var(--red)] px-2.5 py-1 font-medium text-black">{t("Sign out")}</button>
+            <button onClick={() => setConfirmLogout(false)} className="rounded-lg px-2 py-1 text-[var(--muted)] hover:bg-[var(--panel)]">{t("No")}</button>
           </div>
         )}
       </section>
 
       <section className="space-y-3">
         <div>
-          <h3 className="font-medium">{t("Вход через ChatGPT")}</h3>
-          <p className="text-sm text-[var(--muted)]">{t("Код устройства: откроешь ссылку, войдёшь в ChatGPT и введёшь код. Терминал не нужен.")}</p>
+          <h3 className="font-medium">{t("Sign in with ChatGPT")}</h3>
+          <p className="text-sm text-[var(--muted)]">{t("Device code: open the link, sign in to ChatGPT and enter the code. No terminal needed.")}</p>
         </div>
         {!flow ? (
-          <button onClick={startDevice} className={primary}>{account?.email ? t("Войти в другой аккаунт") : t("Получить код")}</button>
+          <button onClick={startDevice} className={primary}>{account?.email ? t("Switch account") : t("Get code")}</button>
         ) : (
           <div className="space-y-3 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/[0.05] p-4">
             <div className="text-sm">
-              {t("1. Открой")}{" "}
+              {t("1. Open")}{" "}
               <a href={flow.url} target="_blank" rel="noreferrer noopener" className="font-mono text-[var(--accent)] underline underline-offset-2">{flow.url}</a>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              {t("2. Введи код")}
+              {t("2. Enter the code")}
               <span className="rounded-lg bg-[var(--bg)] px-3 py-1.5 font-mono text-xl tracking-[0.2em] text-[var(--fg)]">{flow.code}</span>
               <button onClick={async () => { await navigator.clipboard.writeText(flow.code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className={secondary}>
-                {copied ? t("скопирован") : t("копировать")}
+                {copied ? t("copied") : t("copy")}
               </button>
             </div>
             <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
               <span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-[var(--faint)] border-t-[var(--accent)]" />
-              {t("жду подтверждения…")}
+              {t("waiting for confirmation…")}
               <span className="flex-1" />
-              <button onClick={cancel} className="rounded-md px-2 py-1 hover:bg-[var(--panel-2)]">{t("Отменить")}</button>
+              <button onClick={cancel} className="rounded-md px-2 py-1 hover:bg-[var(--panel-2)]">{t("Cancel")}</button>
             </div>
           </div>
         )}
       </section>
 
       <section className="space-y-2">
-        <h3 className="font-medium">{t("Или API-ключ OpenAI")}</h3>
+        <h3 className="font-medium">{t("Or an OpenAI API key")}</h3>
         <div className="flex gap-2">
           <input type="password" name="openai-api-key" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-…" autoComplete="off" className={field} />
-          <button onClick={useKey} disabled={!apiKey.trim().startsWith("sk-")} className={secondary}>{t("Сохранить")}</button>
+          <button onClick={useKey} disabled={!apiKey.trim().startsWith("sk-")} className={secondary}>{t("Save")}</button>
         </div>
-        <p className="text-xs text-[var(--faint)]">{t("Ключ уходит прямо в Codex (в его auth.json в контейнере), морда его не хранит.")}</p>
+        <p className="text-xs text-[var(--faint)]">{t("The key goes straight to Codex (its auth.json in the container); Paddock doesn't store it.")}</p>
       </section>
 
       {status && <div className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</div>}
@@ -191,19 +191,19 @@ type CodexConfig = {
 // Функция, а не константа: подписи переводятся при рендере.
 const options = () => ({
   approval_policy: [
-    ["on-request", t("по запросу модели")],
-    ["untrusted", t("всё, кроме безопасных команд")],
-    ["never", t("никогда не спрашивать")],
+    ["on-request", t("when the model asks")],
+    ["untrusted", t("everything except safe commands")],
+    ["never", t("never ask")],
   ],
   sandbox_mode: [
-    ["danger-full-access", t("полный доступ (контейнер и есть песочница)")],
-    ["workspace-write", t("запись только в workspace")],
-    ["read-only", t("только чтение")],
+    ["danger-full-access", t("full access (the container is the sandbox)")],
+    ["workspace-write", t("write to workspace only")],
+    ["read-only", t("read-only")],
   ],
   web_search: [
-    ["live", t("живой поиск")],
-    ["cached", t("кеш OpenAI")],
-    ["disabled", t("выключен")],
+    ["live", t("live search")],
+    ["cached", t("OpenAI cache")],
+    ["disabled", t("off")],
   ],
 } as const);
 
@@ -228,7 +228,7 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
     }).catch((e) => setStatus({ ok: false, text: e.message }));
   }, [request]);
 
-  if (!cfg || !initial) return <p className="text-sm text-[var(--faint)]">{status?.text ?? t("читаю config.toml…")}</p>;
+  if (!cfg || !initial) return <p className="text-sm text-[var(--faint)]">{status?.text ?? t("reading config.toml…")}</p>;
 
   const set = (k: keyof CodexConfig, v: string) => { setCfg({ ...cfg, [k]: v }); setStatus(null); };
   const model = models.find((m) => m.model === cfg.model);
@@ -241,9 +241,9 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
         reloadUserConfig: true,
       });
       setInitial(cfg);
-      setStatus({ ok: true, text: t("Сохранено. Действует для новых чатов.") });
+      setStatus({ ok: true, text: t("Saved. Applies to new chats.") });
     } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : t("не сохранилось") });
+      setStatus({ ok: false, text: e instanceof Error ? e.message : t("not saved") });
     }
   };
 
@@ -255,36 +255,36 @@ function CodexTab({ models, request }: { models: Model[]; request: Request }) {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-[var(--muted)]">{t("Это")} <span className="font-mono">~/.codex/config.toml</span> {t("твоего контейнера: значения по умолчанию для новых чатов. Модель в шапке переопределяет их на ходу.")}</p>
+      <p className="text-sm text-[var(--muted)]">{t("This is")} <span className="font-mono">~/.codex/config.toml</span> {t("in your container: defaults for new chats. The model picker in the header overrides them on the fly.")}</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1.5">
-          <span className="text-xs text-[var(--muted)]">{t("Модель по умолчанию")}</span>
-          {select("model", [["", t("по умолчанию Codex")], ...models.map((m) => [m.model, m.displayName] as const)])}
+          <span className="text-xs text-[var(--muted)]">{t("Default model")}</span>
+          {select("model", [["", t("Codex default")], ...models.map((m) => [m.model, m.displayName] as const)])}
         </label>
         <label className="space-y-1.5">
-          <span className="text-xs text-[var(--muted)]">{t("Усилие рассуждения")}</span>
-          {select("model_reasoning_effort", [["", t("как у модели")], ...(model?.supportedReasoningEfforts ?? models[0]?.supportedReasoningEfforts ?? []).map((e) => [e.reasoningEffort, e.reasoningEffort] as const)])}
+          <span className="text-xs text-[var(--muted)]">{t("Reasoning effort")}</span>
+          {select("model_reasoning_effort", [["", t("model default")], ...(model?.supportedReasoningEfforts ?? models[0]?.supportedReasoningEfforts ?? []).map((e) => [e.reasoningEffort, e.reasoningEffort] as const)])}
         </label>
         <label className="space-y-1.5">
-          <span className="text-xs text-[var(--muted)]">{t("Когда спрашивать разрешение")}</span>
+          <span className="text-xs text-[var(--muted)]">{t("When to ask for approval")}</span>
           {select("approval_policy", options().approval_policy)}
         </label>
         <label className="space-y-1.5">
-          <span className="text-xs text-[var(--muted)]">{t("Песочница")}</span>
+          <span className="text-xs text-[var(--muted)]">{t("Sandbox")}</span>
           {select("sandbox_mode", options().sandbox_mode)}
         </label>
         <label className="space-y-1.5">
-          <span className="text-xs text-[var(--muted)]">{t("Веб-поиск")}</span>
+          <span className="text-xs text-[var(--muted)]">{t("Web search")}</span>
           {select("web_search", options().web_search)}
         </label>
       </div>
       <label className="block space-y-1.5">
-        <span className="text-xs text-[var(--muted)]">{t("Свои инструкции (добавляются к системному промпту)")}</span>
+        <span className="text-xs text-[var(--muted)]">{t("Custom instructions (appended to the system prompt)")}</span>
         <textarea value={cfg.developer_instructions} onChange={(e) => set("developer_instructions", e.target.value)} rows={5}
-          placeholder={t("Например: отвечай по-русски, коротко; код — с комментариями на русском.")} className={`${field} resize-y font-mono text-[13px]`} />
+          placeholder={t("E.g.: answer in English, briefly; comment code in English.")} className={`${field} resize-y font-mono text-[13px]`} />
       </label>
       <div className="flex items-center gap-3">
-        <button onClick={save} disabled={changed.length === 0} className={primary}>{t("Сохранить")}</button>
+        <button onClick={save} disabled={changed.length === 0} className={primary}>{t("Save")}</button>
         {status && <span className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</span>}
       </div>
     </div>
@@ -299,21 +299,21 @@ function WebTab({ email }: { email: string }) {
   const change = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await authClient.changePassword({ currentPassword: cur, newPassword: next, revokeOtherSessions: true });
-    if (error) return setStatus({ ok: false, text: error.message ?? t("не получилось") });
+    if (error) return setStatus({ ok: false, text: error.message ?? t("failed") });
     setCur("");
     setNext("");
-    setStatus({ ok: true, text: t("Пароль сменён, остальные сессии разлогинены") });
+    setStatus({ ok: true, text: t("Password changed, other sessions signed out") });
   };
 
   return (
     <div className="space-y-8">
     <form onSubmit={change} className="max-w-sm space-y-3" autoComplete="on">
-      <h3 className="font-medium">{t("Пароль морды")}</h3>
+      <h3 className="font-medium">{t("Paddock password")}</h3>
       {/* Логин для менеджера паролей: без него Chrome вписывает почту в первое попавшееся поле страницы — в поиск по чатам. */}
       <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
-      <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} placeholder={t("текущий пароль")} autoComplete="current-password" className={field} />
-      <input type="password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t("новый пароль, 12+ символов")} autoComplete="new-password" className={field} />
-      <button disabled={!cur || next.length < 12} className={primary}>{t("Сменить")}</button>
+      <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} placeholder={t("current password")} autoComplete="current-password" className={field} />
+      <input type="password" value={next} onChange={(e) => setNext(e.target.value)} placeholder={t("new password, 12+ characters")} autoComplete="new-password" className={field} />
+      <button disabled={!cur || next.length < 12} className={primary}>{t("Change")}</button>
       {status && <div className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</div>}
     </form>
     <TwoFactor email={email} />
@@ -338,59 +338,59 @@ function TwoFactor({ email }: { email: string }) {
     try {
       await fn();
     } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : t("не получилось") });
+      setStatus({ ok: false, text: e instanceof Error ? e.message : t("failed") });
     }
     setBusy(false);
   };
 
   const start = () => run(async () => {
     const { data, error } = await authClient.twoFactor.enable({ password: pass, issuer: "Paddock" });
-    if (error || !data) throw new Error(error?.status === 400 || error?.status === 401 ? t("Неверный пароль") : error?.message ?? t("не получилось"));
-    if (!("totpURI" in data)) throw new Error(t("сервер не выдал TOTP"));
+    if (error || !data) throw new Error(error?.status === 400 || error?.status === 401 ? t("Wrong password") : error?.message ?? t("failed"));
+    if (!("totpURI" in data)) throw new Error(t("server didn't return a TOTP"));
     const secret = new URL(data.totpURI).searchParams.get("secret") ?? "";
     setSetup({ qr: await QRCode.toDataURL(data.totpURI, { margin: 1, width: 200 }), secret, backup: data.backupCodes });
     setPass("");
     setOverride(true);
-    setStatus({ ok: true, text: t("2FA включена. Добавь QR в Authy — со следующего входа после пароля спросит код.") });
+    setStatus({ ok: true, text: t("2FA enabled. Add the QR to Authy — from your next sign-in you'll be asked for a code after the password.") });
   });
 
   const disable = () => run(async () => {
     const { error } = await authClient.twoFactor.disable({ password: pass });
-    if (error) throw new Error(error.status === 400 || error.status === 401 ? t("Неверный пароль") : error.message ?? t("не получилось"));
+    if (error) throw new Error(error.status === 400 || error.status === 401 ? t("Wrong password") : error.message ?? t("failed"));
     setPass("");
     setSetup(null);
     setOverride(false);
-    setStatus({ ok: true, text: t("2FA выключена") });
+    setStatus({ ok: true, text: t("2FA disabled") });
   });
 
   return (
     <div className="max-w-md space-y-3">
       <h3 className="flex items-center gap-2 font-medium">
-        {t("Двухфакторный вход")}
-        <span className={`text-xs ${enabled ? "text-[var(--green)]" : "text-[var(--faint)]"}`}>{enabled ? t("включён") : t("выключен")}</span>
+        {t("Two-factor sign-in")}
+        <span className={`text-xs ${enabled ? "text-[var(--green)]" : "text-[var(--faint)]"}`}>{enabled ? t("on") : t("off")}</span>
       </h3>
-      <p className="text-sm text-[var(--muted)]">{t("После пароля — код из Authy, Google Authenticator или 1Password. Без галочки «Запомнить браузер» на входе сессия живёт до закрытия браузера, с ней — 30 дней без пароля и кода.")}</p>
+      <p className="text-sm text-[var(--muted)]">{t("After the password, a code from Authy, Google Authenticator or 1Password. Without “Remember this browser” at sign-in, the session lasts until the browser closes; with it, 30 days without password or code.")}</p>
       {!setup && (
         <form onSubmit={(e) => { e.preventDefault(); void (enabled ? disable() : start()); }} className="flex gap-2">
           <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
-          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder={t("подтверди паролем от морды")} autoComplete="current-password" className={field} />
-          <button disabled={!pass || busy} className={`${enabled ? secondary : primary} shrink-0`}>{busy ? "…" : enabled ? t("Выключить 2FA") : t("Включить 2FA")}</button>
+          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder={t("confirm with your Paddock password")} autoComplete="current-password" className={field} />
+          <button disabled={!pass || busy} className={`${enabled ? secondary : primary} shrink-0`}>{busy ? "…" : enabled ? t("Disable 2FA") : t("Enable 2FA")}</button>
         </form>
       )}
       {setup && (
         <div className="space-y-3 rounded-xl bg-[var(--panel-2)] p-3">
-          <p className="text-sm">{t("В Authy: «+» → «Scan QR code». Камерой не выходит — введи ключ вручную.")}</p>
+          <p className="text-sm">{t("In Authy: “+” → “Scan QR code”. Camera not working? Enter the key manually.")}</p>
           <div className="flex items-center gap-4">
-            <img src={setup.qr} alt={t("QR для приложения-аутентификатора")} className="h-40 w-40 rounded-lg bg-white p-1" />
+            <img src={setup.qr} alt={t("QR code for the authenticator app")} className="h-40 w-40 rounded-lg bg-white p-1" />
             <code className="break-all font-mono text-xs text-[var(--muted)]">{setup.secret.replace(/(.{4})/g, "$1 ").trim()}</code>
           </div>
         </div>
       )}
       {setup && (
         <div className="space-y-2 rounded-xl border border-[var(--border)] p-3">
-          <p className="text-sm">{t("Резервные коды — по одному на вход, если телефона нет под рукой:")}</p>
+          <p className="text-sm">{t("Backup codes — one per sign-in, for when your phone isn't at hand:")}</p>
           <div className="grid grid-cols-2 gap-1 font-mono text-sm">{setup.backup.map((c) => <span key={c}>{c}</span>)}</div>
-          <button type="button" onClick={() => navigator.clipboard.writeText(setup.backup.join("\n"))} className={secondary}>{t("Скопировать")}</button>
+          <button type="button" onClick={() => navigator.clipboard.writeText(setup.backup.join("\n"))} className={secondary}>{t("Copy")}</button>
         </div>
       )}
       {status && <div className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</div>}
@@ -425,7 +425,7 @@ function ProxyTab() {
   useEffect(() => {
     fetch("/api/proxy").then(async (r) => {
       const j = await r.json();
-      if (!r.ok) return setError(r.status === 403 ? t("Прокси настраивает только админ.") : j.error ?? t("ошибка {status}", { status: r.status }));
+      if (!r.ok) return setError(r.status === 403 ? t("Only an admin can configure proxies.") : j.error ?? t("error {status}", { status: r.status }));
       apply(j);
     }).catch((e) => setError(e.message));
   }, []);
@@ -438,7 +438,7 @@ function ProxyTab() {
   };
 
   if (error) return <p className="text-sm text-[var(--muted)]">{error}</p>;
-  if (!nodes) return <p className="text-sm text-[var(--faint)]">{t("читаю цепочку…")}</p>;
+  if (!nodes) return <p className="text-sm text-[var(--faint)]">{t("reading chain…")}</p>;
 
   const dirty = JSON.stringify(nodes) !== saved;
   const upd = (i: number, patch: Partial<Node>) => { setNodes(nodes.map((n, j) => (j === i ? { ...n, ...patch } : n))); setStatus(null); };
@@ -458,35 +458,35 @@ function ProxyTab() {
     });
     const j = await r.json();
     setBusy(false);
-    if (!r.ok) return setStatus({ ok: false, text: j.error ?? t("не сохранилось") });
+    if (!r.ok) return setStatus({ ok: false, text: j.error ?? t("not saved") });
     apply(j);
-    setStatus({ ok: true, text: t("Применено и сохранено в gost.yaml") });
+    setStatus({ ok: true, text: t("Applied and saved to gost.yaml") });
     check();
   };
 
   return (
     <div className="space-y-5">
       <p className="text-sm text-[var(--muted)]">
-        {t("Через эти прокси Codex и морда ходят в интернет — напрямую им нельзя. Порядок = приоритет: если верхний не отвечает, берётся следующий.")}
+        {t("Codex and Paddock reach the internet through these proxies — they have no direct access. Order = priority: if the top one doesn't respond, the next one is used.")}
       </p>
 
       <div className="flex flex-wrap items-center gap-3 rounded-xl bg-[var(--panel-2)] p-3 text-sm">
-        <button onClick={check} disabled={checking} className={secondary}>{checking ? t("проверяю…") : t("Проверить выход")}</button>
-        <button onClick={() => setReveal((r) => !r)} className="order-last ml-auto text-xs text-[var(--muted)] hover:text-[var(--fg)]">{reveal ? t("скрыть IP") : t("показать IP")}</button>
+        <button onClick={check} disabled={checking} className={secondary}>{checking ? t("checking…") : t("Check exit")}</button>
+        <button onClick={() => setReveal((r) => !r)} className="order-last ml-auto text-xs text-[var(--muted)] hover:text-[var(--fg)]">{reveal ? t("hide IP") : t("show IP")}</button>
         {exit && ("error" in exit
           ? <span className="text-[var(--red)]">{exit.error}</span>
           : <span className="font-mono text-[13px]">
               <span className="text-[var(--green)]">●</span> {reveal ? exit.ip : maskIp(exit.ip)} <span className="text-[var(--muted)]">{[exit.country, exit.org].filter(Boolean).join(" · ")}</span>{" "}
-              <span className="text-[var(--faint)]">{t("{ms} мс", { ms: exit.ms })}</span>
+              <span className="text-[var(--faint)]">{t("{ms} ms", { ms: exit.ms })}</span>
             </span>)}
       </div>
 
       <div className="flex gap-2">
         {/* Подпись снизу вверх: чем выше узел, тем выше приоритет */}
-        <div className="flex w-5 shrink-0 flex-col items-center gap-1 py-1" title={t("Сверху — самый приоритетный, вниз — запасные")}>
+        <div className="flex w-5 shrink-0 flex-col items-center gap-1 py-1" title={t("Top is highest priority, lower ones are fallbacks")}>
           <Icon name="arrowUp" size={13} className="text-[var(--accent)]" />
           <div className="w-px flex-1 bg-gradient-to-b from-[var(--accent)] to-[var(--border)]" />
-          <span className="rotate-180 text-[10.5px] uppercase tracking-[0.18em] text-[var(--faint)] [writing-mode:vertical-rl]">{t("приоритет")}</span>
+          <span className="rotate-180 text-[10.5px] uppercase tracking-[0.18em] text-[var(--faint)] [writing-mode:vertical-rl]">{t("priority")}</span>
         </div>
       <div className="min-w-0 flex-1 space-y-2">
         {nodes.map((n, i) => {
@@ -495,40 +495,40 @@ function ProxyTab() {
             <div key={i} className={`grid grid-cols-[auto_1fr_auto] items-start gap-2 rounded-xl border p-3 ${isActive ? "border-[var(--green)]/40" : "border-[var(--border)]"}`}>
               <div className="flex flex-col items-center gap-0.5 pt-1">
                 <span className="font-mono text-xs text-[var(--faint)]">{i + 1}</span>
-                <button disabled={i === 0} onClick={() => move(i, -1)} className="text-[var(--faint)] hover:text-[var(--fg)] disabled:opacity-20" title={t("Выше")}><Icon name="chevron" size={14} className="rotate-180" /></button>
-                <button disabled={i === nodes.length - 1} onClick={() => move(i, 1)} className="text-[var(--faint)] hover:text-[var(--fg)] disabled:opacity-20" title={t("Ниже")}><Icon name="chevron" size={14} /></button>
+                <button disabled={i === 0} onClick={() => move(i, -1)} className="text-[var(--faint)] hover:text-[var(--fg)] disabled:opacity-20" title={t("Move up")}><Icon name="chevron" size={14} className="rotate-180" /></button>
+                <button disabled={i === nodes.length - 1} onClick={() => move(i, 1)} className="text-[var(--faint)] hover:text-[var(--fg)] disabled:opacity-20" title={t("Move down")}><Icon name="chevron" size={14} /></button>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                <input value={n.name} onChange={(e) => upd(i, { name: e.target.value })} placeholder={t("имя")} className={field} />
+                <input value={n.name} onChange={(e) => upd(i, { name: e.target.value })} placeholder={t("name")} className={field} />
                 <input value={reveal ? n.addr : maskIp(n.addr)} readOnly={!reveal} onFocus={() => !reveal && n.addr && setReveal(true)}
                   onChange={(e) => upd(i, { addr: e.target.value })} placeholder="host:port" className={`${field} font-mono`} />
-                <input value={n.username} onChange={(e) => upd(i, { username: e.target.value })} placeholder={t("логин (если нужен)")} autoComplete="off" className={field} />
+                <input value={n.username} onChange={(e) => upd(i, { username: e.target.value })} placeholder={t("username (if needed)")} autoComplete="off" className={field} />
                 <input type="password" value={n.password} onChange={(e) => upd(i, { password: e.target.value })} autoComplete="new-password"
-                  placeholder={n.hasPassword ? t("пароль сохранён — пусто = не менять") : t("пароль")} className={field} />
+                  placeholder={n.hasPassword ? t("password saved — leave empty to keep") : t("password")} className={field} />
               </div>
               <div className="flex flex-col items-end gap-1 pt-1">
-                <button onClick={() => setNodes(nodes.filter((_, j) => j !== i))} disabled={nodes.length === 1} title={t("Удалить")}
+                <button onClick={() => setNodes(nodes.filter((_, j) => j !== i))} disabled={nodes.length === 1} title={t("Remove")}
                   className="rounded-md p-1 text-[var(--faint)] hover:bg-[var(--panel-2)] hover:text-[var(--red)] disabled:opacity-20">
                   <Icon name="plus" size={15} className="rotate-45" />
                 </button>
-                {isActive && <span className="text-[10px] uppercase tracking-wide text-[var(--green)]">{t("выход")}</span>}
+                {isActive && <span className="text-[10px] uppercase tracking-wide text-[var(--green)]">{t("exit")}</span>}
               </div>
             </div>
           );
         })}
         <button onClick={() => setNodes([...nodes, { name: `proxy-${nodes.length + 1}`, addr: "", username: "", password: "", hasPassword: false }])}
           className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm text-[var(--accent)] hover:bg-[var(--panel-2)]">
-          <Icon name="plus" size={14} /> {t("Добавить прокси")}
+          <Icon name="plus" size={14} /> {t("Add proxy")}
         </button>
       </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={save} disabled={!dirty || busy} className={primary}>{busy ? "…" : t("Применить")}</button>
-        {dirty && <button onClick={() => setNodes(JSON.parse(saved))} className="text-sm text-[var(--muted)] hover:text-[var(--fg)]">{t("Отменить правки")}</button>}
+        <button onClick={save} disabled={!dirty || busy} className={primary}>{busy ? "…" : t("Apply")}</button>
+        {dirty && <button onClick={() => setNodes(JSON.parse(saved))} className="text-sm text-[var(--muted)] hover:text-[var(--fg)]">{t("Discard changes")}</button>}
         {status && <span className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</span>}
       </div>
-      <p className="text-xs text-[var(--faint)]">{t("Поддерживаются HTTP-прокси. Пароли хранятся только в egress и в браузер не отдаются.")}</p>
+      <p className="text-xs text-[var(--faint)]">{t("HTTP proxies are supported. Passwords are stored only in egress and never sent to the browser.")}</p>
     </div>
   );
 }
@@ -555,9 +555,9 @@ function NeuralDeepTab({ request, models, reload }: { request: Request; models: 
       setKey("");
       await readKey();
       const n = await reload();
-      setStatus({ ok: true, text: t("Подключено: {n} чат-моделей в выборе модели", { n }) });
+      setStatus({ ok: true, text: t("Connected: {n} chat models in the model picker", { n }) });
     } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : t("не получилось") });
+      setStatus({ ok: false, text: e instanceof Error ? e.message : t("failed") });
     }
     setBusy(false);
   };
@@ -567,36 +567,36 @@ function NeuralDeepTab({ request, models, reload }: { request: Request; models: 
     await write(null).catch(() => {});
     await readKey();
     await reload().catch(() => 0);
-    setStatus({ ok: true, text: t("Ключ удалён") });
+    setStatus({ ok: true, text: t("Key removed") });
     setBusy(false);
   };
 
   return (
     <div className="space-y-5">
       <p className="text-sm text-[var(--muted)]">
-        {t("Модели")} <a href="https://neuraldeep.ru/docs" target="_blank" rel="noreferrer noopener" className="text-[var(--accent)] underline underline-offset-2">neuraldeep.ru</a> {t("через Responses API. Ключ уходит в")}{" "}
-        <span className="font-mono">config.toml</span> {t("твоего Codex, морда его не хранит. Чатовые модели ключа появятся в выборе модели группой «NeuralDeep».")}
+        {t("Models from")} <a href="https://neuraldeep.ru/docs" target="_blank" rel="noreferrer noopener" className="text-[var(--accent)] underline underline-offset-2">neuraldeep.ru</a> {t("via the Responses API. The key goes into")}{" "}
+        <span className="font-mono">config.toml</span> {t("of your Codex; Paddock doesn't store it. The key's chat models will appear in the model picker under “NeuralDeep”.")}
       </p>
 
       <div className="flex items-center gap-3 rounded-xl bg-[var(--panel-2)] p-3 text-sm">
         <span className={`h-2 w-2 rounded-full ${current ? "bg-[var(--green)]" : "bg-[var(--faint)]"}`} />
         <span className="flex-1 font-mono text-[13px]">
-          {current === undefined ? t("читаю…") : current ? `${current.slice(0, 5)}…${current.slice(-4)}` : t("ключ не задан")}
+          {current === undefined ? t("reading…") : current ? `${current.slice(0, 5)}…${current.slice(-4)}` : t("no key set")}
         </span>
-        {current && <button onClick={() => reload().then((n) => setStatus({ ok: true, text: t("{n} чат-моделей", { n }) })).catch((e) => setStatus({ ok: false, text: e.message }))} className={secondary}>{t("Обновить модели")}</button>}
-        {current && <button onClick={remove} disabled={busy} className={secondary}>{t("Удалить")}</button>}
+        {current && <button onClick={() => reload().then((n) => setStatus({ ok: true, text: t("{n} chat models", { n }) })).catch((e) => setStatus({ ok: false, text: e.message }))} className={secondary}>{t("Refresh models")}</button>}
+        {current && <button onClick={remove} disabled={busy} className={secondary}>{t("Remove")}</button>}
       </div>
 
       <div className="flex gap-2">
-        <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={t("sk-… из hub.neuraldeep.ru/app/keys")} autoComplete="off" className={field} />
-        <button onClick={save} disabled={busy || !/^sk-[\w-]{10,}$/.test(key.trim())} className={primary}>{busy ? "…" : current ? t("Заменить") : t("Подключить")}</button>
+        <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={t("sk-… from hub.neuraldeep.ru/app/keys")} autoComplete="off" className={field} />
+        <button onClick={save} disabled={busy || !/^sk-[\w-]{10,}$/.test(key.trim())} className={primary}>{busy ? "…" : current ? t("Replace") : t("Connect")}</button>
       </div>
 
       {status && <div className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</div>}
 
       {models.length > 0 && (
         <div>
-          <div className="mb-2 text-xs text-[var(--muted)]">{t("Модели ключа")}</div>
+          <div className="mb-2 text-xs text-[var(--muted)]">{t("Models for this key")}</div>
           <div className="flex flex-wrap gap-1.5">
             {models.map((m) => (
               <span key={m.id} className="rounded-md bg-[var(--panel-2)] px-2 py-1 font-mono text-xs" title={m.description}>
@@ -604,7 +604,7 @@ function NeuralDeepTab({ request, models, reload }: { request: Request; models: 
               </span>
             ))}
           </div>
-          <p className="mt-2 text-xs text-[var(--faint)]">{t("Провайдер задаётся на весь чат: при выборе модели NeuralDeep в чате с ChatGPT-моделью следующий вопрос уйдёт в новый чат.")}</p>
+          <p className="mt-2 text-xs text-[var(--faint)]">{t("The provider is set per chat: picking a NeuralDeep model in a chat with a ChatGPT model sends the next message to a new chat.")}</p>
         </div>
       )}
     </div>

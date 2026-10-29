@@ -15,12 +15,12 @@ type Op =
 
 const COLORS = ["#ff3b30", "#ff9500", "#ffcc00", "#34c759", "#0a84ff", "#ffffff", "#000000"];
 const TOOLS: { id: Tool; label: string; icon: string }[] = [
-  { id: "pen", label: "Карандаш", icon: "✎" },
-  { id: "rect", label: "Прямоугольник", icon: "▭" },
-  { id: "ellipse", label: "Овал", icon: "◯" },
-  { id: "arrow", label: "Стрелка", icon: "↗" },
-  { id: "text", label: "Текст", icon: "T" },
-  { id: "crop", label: "Обрезать", icon: "⌗" },
+  { id: "pen", label: "Pen", icon: "✎" },
+  { id: "rect", label: "Rectangle", icon: "▭" },
+  { id: "ellipse", label: "Ellipse", icon: "◯" },
+  { id: "arrow", label: "Arrow", icon: "↗" },
+  { id: "text", label: "Text", icon: "T" },
+  { id: "crop", label: "Crop", icon: "⌗" },
 ];
 
 const box = (a: Pt, b: Pt) => ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
@@ -195,19 +195,19 @@ export function ImageEditor({ src, onCancel, onDone }: { src: string; onCancel: 
             {x.icon}
           </button>
         ))}
-        <button onClick={() => setOps((o) => [...o, { kind: "rotate" }])} title={t("Повернуть")} className={`${btn} text-[var(--muted)] hover:bg-[var(--panel-2)]`}>⟳</button>
+        <button onClick={() => setOps((o) => [...o, { kind: "rotate" }])} title={t("Rotate")} className={`${btn} text-[var(--muted)] hover:bg-[var(--panel-2)]`}>⟳</button>
         <span className="mx-2 h-5 w-px bg-white/10" />
         {COLORS.map((c) => (
           <button key={c} onClick={() => setColor(c)} title={c} aria-label={c}
             className={`h-6 w-6 rounded-full border-2 ${color === c ? "border-[var(--fg)] scale-110" : "border-white/20"}`} style={{ background: c }} />
         ))}
         <span className="mx-2 h-5 w-px bg-white/10" />
-        <button onClick={() => setOps((o) => o.slice(0, -1))} disabled={!ops.length} title={t("Отменить (⌘Z)")} className={`${btn} text-[var(--muted)] hover:bg-[var(--panel-2)] disabled:opacity-30`}>
+        <button onClick={() => setOps((o) => o.slice(0, -1))} disabled={!ops.length} title={t("Undo (⌘Z)")} className={`${btn} text-[var(--muted)] hover:bg-[var(--panel-2)] disabled:opacity-30`}>
           <Icon name="refresh" size={14} className="-scale-x-100" />
         </button>
         <span className="flex-1" />
-        <button onClick={onCancel} className="rounded-lg px-3 py-1.5 text-sm text-[var(--muted)] hover:bg-[var(--panel-2)]">{t("Отмена")}</button>
-        <button onClick={done} data-editor-done className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1.5 text-sm font-medium text-black">{t("Готово")}</button>
+        <button onClick={onCancel} className="rounded-lg px-3 py-1.5 text-sm text-[var(--muted)] hover:bg-[var(--panel-2)]">{t("Cancel")}</button>
+        <button onClick={done} data-editor-done className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1.5 text-sm font-medium text-black">{t("Done")}</button>
       </div>
       <div className="flex min-h-0 flex-1 items-center justify-center p-6">
         <div className="relative max-h-full max-w-full">
@@ -216,12 +216,12 @@ export function ImageEditor({ src, onCancel, onDone }: { src: string; onCancel: 
           {typing && (
             <input autoFocus value={typing.text} onChange={(e) => setTyping({ ...typing, text: e.target.value })}
               onKeyDown={(e) => { if (e.key === "Enter") commitText(); if (e.key === "Escape") setTyping(null); }}
-              placeholder={t("текст")} className="absolute rounded bg-black/60 px-1.5 py-0.5 text-lg font-semibold outline-none"
+              placeholder={t("text")} className="absolute rounded bg-black/60 px-1.5 py-0.5 text-lg font-semibold outline-none"
               style={{ left: typing.screen.x, top: typing.screen.y, color }} />
           )}
         </div>
       </div>
-      {!img && <p className="pb-6 text-center text-sm text-[var(--muted)]">{t("открываю картинку…")}</p>}
+      {!img && <p className="pb-6 text-center text-sm text-[var(--muted)]">{t("opening image…")}</p>}
     </div>
   );
 }

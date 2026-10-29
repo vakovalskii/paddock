@@ -1,7 +1,7 @@
 ---
 node_type: decision
-title: Контейнер харнесса на пользователя, наружу только через egress
-description: "Почему каждый пользователь получает свой контейнер с danger-full-access внутри, а не общий агент с песочницей."
+title: One harness container per user, outbound only through egress
+description: "Why every user gets their own container with danger-full-access inside, instead of a shared agent with a sandbox."
 service: harness
 status: active
 updated: 2026-10-29
@@ -9,14 +9,14 @@ links:
   relates_to: [../reference/architecture.md]
 ---
 
-# Контейнер на пользователя, наружу только через egress
+# One container per user, outbound only through egress
 
-**Решение.** Каждый пользователь — отдельный контейнер харнесса со своими томами и токеном.
-Внутри агенту можно всё (`danger-full-access`), потому что песочница — сам контейнер:
-`cap_drop: ALL`, нет прямой сети, выход только через egress, LAN и хост закрыты.
+**Decision.** Each user is a separate harness container with their own volumes and token.
+Inside, the agent may do anything (`danger-full-access`), because the container itself is the sandbox:
+`cap_drop: ALL`, no direct network, the only way out is egress, LAN and host are closed.
 
-**Почему.** Песочницы внутри харнесса (seatbelt/landlock) мешают реальной работе — агенту
-нужны npm, git, сборки. Проще и надёжнее изолировать снаружи. Плюс это даёт переносимость:
-пользователь = набор томов.
+**Why.** Sandboxes inside the harness (seatbelt/landlock) get in the way of real work: the agent
+needs npm, git, builds. Isolating from the outside is simpler and more reliable. It also gives portability:
+a user = a set of volumes.
 
-**Цена.** Ресурсы на контейнер (лимит 6 ГБ/4 CPU), общая сеть `core` пока не разделена (roadmap 3.9).
+**Cost.** Resources per container (limit 6 GB / 4 CPU); the shared `core` network is not split yet (roadmap 3.9).

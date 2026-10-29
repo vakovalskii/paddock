@@ -7,6 +7,6 @@ updated: 2026-10-29
 
 # ops
 
-- [deploy.md](deploy.md) — поднять с нуля и выкатить новую версию морды
-- [add-user.md](add-user.md) — завести пользователя
-- [gotchas.md](gotchas.md) — ловушки, на которые уже наступили
+- [deploy.md](deploy.md) — bring everything up from scratch and deploy a new version of the web UI
+- [add-user.md](add-user.md) — add a user
+- [gotchas.md](gotchas.md) — pitfalls we have already hit

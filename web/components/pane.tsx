@@ -227,11 +227,11 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
         setTurnId((t) => (t === p.turn.id ? null : t));
         setMessages((ms) => ms.map((m) => (m.id === `a-${p.turn.id}` ? { ...m, running: false } : m)));
         patchMeta(p.turn.id, { durationMs: p.turn.durationMs });
-        if (p.turn.error) updatePart(p.turn.id, `err-${p.turn.id}`, () => ({ type: "text", itemId: `err-${p.turn.id}`, text: `⚠️ ${p.turn.error.message ?? t("ошибка хода")}` }));
+        if (p.turn.error) updatePart(p.turn.id, `err-${p.turn.id}`, () => ({ type: "text", itemId: `err-${p.turn.id}`, text: `⚠️ ${p.turn.error.message ?? t("turn failed")}` }));
         onThreadsChanged();
         break;
       case "error":
-        if (!p.willRetry) updatePart(p.turnId, `err-${p.turnId}`, () => ({ type: "text", itemId: `err-${p.turnId}`, text: `⚠️ ${p.error?.message ?? t("ошибка")}` }));
+        if (!p.willRetry) updatePart(p.turnId, `err-${p.turnId}`, () => ({ type: "text", itemId: `err-${p.turnId}`, text: `⚠️ ${p.error?.message ?? t("error")}` }));
         break;
     }
   }, [ensureTurn, updatePart, patchMeta, firstToken, onThreadsChanged]);
@@ -458,7 +458,7 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
             {images.map((im) => (
               <span key={im.path} className="group/att relative">
                 <img src={im.url} alt="" title={im.path} className="h-14 w-14 rounded-lg border border-[var(--border)] object-cover" />
-                <button onClick={() => setImages((is) => is.filter((x) => x.path !== im.path))} title={t("Убрать")}
+                <button onClick={() => setImages((is) => is.filter((x) => x.path !== im.path))} title={t("Remove")}
                   className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-[var(--panel-2)] text-[var(--muted)] opacity-0 shadow group-hover/att:opacity-100">
                   <Icon name="plus" size={11} className="rotate-45" />
                 </button>
@@ -468,7 +468,7 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
               <span key={p.n} title={p.text.split("\n").slice(0, 12).join("\n")} data-paste-chip
                 className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-2 py-1 font-mono text-[11.5px] text-[var(--muted)]">
                 {pasteToken(p)}
-                <button onClick={() => removePaste(p.n)} title={t("Убрать")} className="rounded p-0.5 hover:text-[var(--fg)]">
+                <button onClick={() => removePaste(p.n)} title={t("Remove")} className="rounded p-0.5 hover:text-[var(--fg)]">
                   <Icon name="plus" size={11} className="rotate-45" />
                 </button>
               </span>
@@ -478,11 +478,11 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
         <ComposerPrimitive.Input
           onPaste={onPaste}
           autoFocus={active}
-          placeholder={connected ? t("Что делаем?") : t("Нет связи с codex…")}
+          placeholder={connected ? t("What should we do?") : t("No connection to codex…")}
           className={`${compact ? "max-h-40 min-h-9" : "max-h-60 min-h-11"} w-full resize-none bg-transparent px-2.5 py-2 leading-relaxed outline-none placeholder:text-[var(--faint)]`}
         />
         <div className="flex items-center gap-2 px-1">
-          <span className="flex min-w-0 items-center gap-1.5 truncate rounded-lg border border-[var(--border)] px-2.5 py-1 font-mono text-xs text-[var(--muted)]" title={t("Рабочая папка Codex")}>
+          <span className="flex min-w-0 items-center gap-1.5 truncate rounded-lg border border-[var(--border)] px-2.5 py-1 font-mono text-xs text-[var(--muted)]" title={t("Codex working folder")}>
             <Icon name="folder" size={13} className="shrink-0 text-[var(--blue)]" />
             <span className="truncate">{ctx.cwd ?? CWD}</span>
             {ctx.branch && (
@@ -499,7 +499,7 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
             </ComposerPrimitive.Send>
           </ThreadPrimitive.If>
           <ThreadPrimitive.If running>
-            <ComposerPrimitive.Cancel className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--accent)]/50 text-[var(--accent)]" title={t("Остановить")}>
+            <ComposerPrimitive.Cancel className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--accent)]/50 text-[var(--accent)]" title={t("Stop")}>
               <Icon name="stop" size={14} fill="currentColor" />
             </ComposerPrimitive.Cancel>
           </ThreadPrimitive.If>
@@ -517,22 +517,22 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
         className={`relative flex min-h-0 min-w-0 flex-1 flex-col ${compact ? `border-t-2 ${active ? "border-[var(--accent)]" : "border-transparent"}` : ""}`}>
         <header className="flex h-12 shrink-0 items-center gap-1 border-b border-[var(--border)]/60 px-2">
           {compact && (
-            <button onPointerDown={onGrip} title={t("Перетащи, чтобы поменять окна местами")} data-grip
+            <button onPointerDown={onGrip} title={t("Drag to swap panes")} data-grip
               className="cursor-grab touch-none rounded-md p-1 text-[var(--faint)] hover:bg-[var(--panel)] hover:text-[var(--fg)] active:cursor-grabbing">
               <Icon name="grip" size={14} strokeWidth={3} />
             </button>
           )}
           {compact && (
             <span className="flex min-w-0 items-center gap-2 pl-1 pr-1">
-              <span title={running ? t("работает") : t("готов")}
+              <span title={running ? t("working") : t("done")}
                 className={`h-2 w-2 shrink-0 rounded-full ${running ? "animate-pulse bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" : threadId ? "bg-[var(--green)]" : "bg-[var(--faint)]"}`} />
-              <span className="max-w-[16rem] truncate text-sm text-[var(--muted)]">{title ?? t("Новый чат")}</span>
+              <span className="max-w-[16rem] truncate text-sm text-[var(--muted)]">{title ?? t("New chat")}</span>
             </span>
           )}
           <ModelPicker models={[...models, ...ndModels]} value={shown} onChange={choose} />
           <span className="flex-1" />
           {closable && (
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} title={t("Закрыть окно")}
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} title={t("Close pane")}
               className="rounded-md p-1.5 text-[var(--faint)] hover:bg-[var(--panel)] hover:text-[var(--fg)]">
               <Icon name="plus" size={15} className="rotate-45" />
             </button>
@@ -544,13 +544,13 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
             // В сетке поле ввода всегда внизу — чтобы в ряду окон оно стояло на одной высоте.
             <>
               <div className="glow flex flex-1 items-center justify-center px-4">
-                <h1 className="text-center text-xl font-semibold tracking-tight">{t("Чем займёмся?")}</h1>
+                <h1 className="text-center text-xl font-semibold tracking-tight">{t("What are we building?")}</h1>
               </div>
               <div className="w-full px-3 pb-3">{composer}</div>
             </>
           ) : empty ? (
             <div className={`glow flex flex-1 flex-col items-center justify-center px-4 ${compact ? "pb-6" : "pb-24"}`}>
-              <h1 className={`mb-5 text-center font-semibold tracking-tight ${compact ? "text-xl" : "text-2xl md:text-[28px]"}`}>{t("Чем займёмся?")}</h1>
+              <h1 className={`mb-5 text-center font-semibold tracking-tight ${compact ? "text-xl" : "text-2xl md:text-[28px]"}`}>{t("What are we building?")}</h1>
               <div className={`w-full ${compact ? "max-w-xl" : "max-w-3xl"}`}>{composer}</div>
             </div>
           ) : (
@@ -568,7 +568,7 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
           <button onMouseDown={(e) => e.preventDefault()} onClick={replyToQuote} data-quote-reply
             className="absolute z-30 flex -translate-x-1/2 -translate-y-full items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--panel)] px-2.5 py-1.5 text-xs shadow-xl shadow-black/50 hover:border-[var(--accent)]/60"
             style={{ left: quote.x, top: quote.y }}>
-            <span className="text-[var(--accent)]">❝</span> {t("Ответить на выделенное")}
+            <span className="text-[var(--accent)]">❝</span> {t("Reply to selection")}
           </button>
         )}
         {editing && <ImageEditor src={editing} onCancel={() => setEditing(null)} onDone={(png, url) => void saveImage(png, url)} />}

@@ -48,7 +48,7 @@ export function StatusBar({ model, effort, cwd, branch, usage, limits, connected
       {usage && (
         <>
           <Sep />
-          <span className="flex items-center gap-1.5" title={window ? t("в контексте {used} токенов из {total}", { used: used.toLocaleString(locale()), total: window.toLocaleString(locale()) }) : t("в контексте {used} токенов", { used: used.toLocaleString(locale()) })}>
+          <span className="flex items-center gap-1.5" title={window ? t("{used} of {total} tokens in context", { used: used.toLocaleString(locale()), total: window.toLocaleString(locale()) }) : t("{used} tokens in context", { used: used.toLocaleString(locale()) })}>
             {window && (
               <span className="relative h-2 w-14 overflow-hidden rounded-sm bg-[var(--panel-2)]">
                 <span className="absolute inset-y-0 left-0 rounded-sm bg-[repeating-linear-gradient(90deg,var(--pink)_0_3px,transparent_3px_4px)]" style={{ width: `${pct}%` }} />
@@ -62,7 +62,7 @@ export function StatusBar({ model, effort, cwd, branch, usage, limits, connected
           {cache !== null && (
             <>
               <Sep />
-              <span title={t("доля входа, взятая из кеша, в последнем запросе")}>
+              <span title={t("share of input served from cache in the last request")}>
                 cache <span className="text-[var(--green)]">{cache}%</span>{" "}
                 <span className="text-[var(--green)]">↓{fmtTokens(usage.last.cachedInputTokens)}</span>{" "}
                 <span className="text-[var(--yellow)]">+{fmtTokens(usage.last.outputTokens)}</span>
@@ -74,7 +74,7 @@ export function StatusBar({ model, effort, cwd, branch, usage, limits, connected
       {limits?.primary && (
         <>
           <Sep />
-          <span title={t("лимит подписки ChatGPT")}>
+          <span title={t("ChatGPT subscription limit")}>
             {fmtWindow(limits.primary.windowDurationMins)}:<span className="text-[var(--pink)]">{Math.round(limits.primary.usedPercent)}%</span>
             {limits.primary.resetsAt && <span className="text-[var(--faint)]">({fmtUntil(limits.primary.resetsAt)})</span>}
           </span>

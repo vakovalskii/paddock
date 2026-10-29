@@ -1,7 +1,7 @@
 ---
 node_type: reference
-title: Харнессы — протокол морды и адаптеры
-description: "Как морда говорит с агентом-харнессом, что нужно от харнесса, как подключить OpenCode/Hermes/другие и менять харнесс на лету в отдельном чате."
+title: Harnesses — the web UI protocol and adapters
+description: "How the web UI talks to an agent harness, what we need from a harness, how to plug in OpenCode/Hermes/others and switch harnesses on the fly per chat."
 service: harness
 status: draft
 updated: 2026-10-29
@@ -12,68 +12,68 @@ links:
   relates_to: [../plans/roadmap.md]
 ---
 
-# Харнессы — протокол морды и адаптеры
+# Harnesses — the web UI protocol and adapters
 
-**Харнесс** — готовый агентный движок (Codex, OpenCode, Hermes…), который ведёт сессии,
-вызывает модель и инструменты. Paddock его не переписывает, а запускает в контейнере
-пользователя и показывает в морде.
+A **harness** is an existing agent engine (Codex, OpenCode, Hermes…) that runs sessions
+and calls the model and tools. Paddock does not rewrite it; it runs it in the user's
+container and shows it in the web UI.
 
-## Сейчас
+## Today
 
-Морда говорит с **Codex app-server** (JSON-RPC 2.0 по WebSocket) напрямую: `thread/*`,
-`turn/*`, `item/*`, `model/list`, `account/*`, `config/*`, `fs/*`. Перевод событий в
-сообщения — `web/lib/messages.ts`. Это быстрый путь, но он завязывает морду на Codex.
+The web UI talks to **Codex app-server** (JSON-RPC 2.0 over WebSocket) directly: `thread/*`,
+`turn/*`, `item/*`, `model/list`, `account/*`, `config/*`, `fs/*`. Events are turned into
+messages in `web/lib/messages.ts`. This is the fast path, but it ties the web UI to Codex.
 
-## Целевая схема: один протокол морды + адаптер на харнесс
+## Target design: one web UI protocol + one adapter per harness
 
 ```mermaid
 flowchart LR
-  pane["окно чата"] -- "Paddock protocol\n(thread/turn/item/approval/usage)" --> router["web: роутер харнессов"]
-  router --> a1["адаптер codex\n(почти 1:1 с app-server)"]
-  router --> a2["адаптер opencode\n(HTTP API + SSE `opencode serve`)"]
-  router --> a3["адаптер hermes"]
-  router --> a4["адаптер …"]
-  a1 --> c1["контейнер: codex app-server"]
-  a2 --> c2["контейнер: opencode serve"]
-  a3 --> c3["контейнер: hermes"]
+  pane["chat pane"] -- "Paddock protocol\n(thread/turn/item/approval/usage)" --> router["web: harness router"]
+  router --> a1["codex adapter\n(almost 1:1 with app-server)"]
+  router --> a2["opencode adapter\n(HTTP API + SSE `opencode serve`)"]
+  router --> a3["hermes adapter"]
+  router --> a4["… adapter"]
+  a1 --> c1["container: codex app-server"]
+  a2 --> c2["container: opencode serve"]
+  a3 --> c3["container: hermes"]
 ```
 
-**Paddock protocol** — минимальный общий набор, его и так уже использует морда:
+The **Paddock protocol** is the minimal common set the web UI already uses:
 
-| сущность | что нужно от харнесса |
+| entity | what we need from the harness |
 |---|---|
-| thread | создать в папке, продолжить, список, архив, имя |
-| turn | старт с текстом/картинками, прерывание, откат до хода (правка сообщения) |
-| item (поток) | текст ответа, рассуждения, shell (команда, вывод, код выхода), правка файлов (diff), MCP/инструмент, веб-поиск |
-| approval | запрос разрешения → ответ разрешить / на сессию / отказать |
-| usage | токены, окно контекста, лимиты аккаунта (если есть) |
-| models | список моделей и усилий; провайдеры (ключи) |
-| fs | прочитать файл/картинку, список папок, создать папку |
-| skills/fs | список скиллов по папке, вкл/выкл; запись файлов — так ставятся инструменты Paddock (CLI + скилл) |
+| thread | create in a folder, resume, list, archive, name |
+| turn | start with text/images, interrupt, roll back to a turn (message editing) |
+| item (stream) | answer text, reasoning, shell (command, output, exit code), file edits (diff), MCP/tool, web search |
+| approval | approval request → reply allow / allow for session / deny |
+| usage | tokens, context window, account limits (if any) |
+| models | list of models and reasoning efforts; providers (keys) |
+| fs | read a file/image, list folders, create a folder |
+| skills/fs | list skills per folder, enable/disable; writing files — this is how Paddock tools (CLI + skill) are installed |
 
-Адаптер живёт **в морде** (TypeScript) и переводит нативный протокол харнесса в этот набор.
-Что харнесс не умеет, морда прячет (например, нет отката — нет кнопки «изменить»).
+The adapter lives **in the web UI** (TypeScript) and translates the harness's native protocol into this set.
+Whatever a harness cannot do, the UI hides (e.g. no rollback means no "edit" button).
 
-## Смена харнесса на лету
+## Switching harnesses on the fly
 
-- У пользователя может быть несколько харнесс-контейнеров (`harness-<user>-codex`, `-opencode`…)
-  с **общим** томом `workspace-<user>`: проекты и файлы одни, сессии у каждого свои.
-- Харнесс выбирается **на чат** (как сейчас провайдер модели): в пикере появляется группа «Харнесс».
-- Смена харнесса в открытом чате = новый чат в той же папке (контекст можно передать сводкой).
-- Инструменты Paddock — это CLI + скилл, не MCP: shell есть у любого харнесса и любой модели. Морда ставит их во все харнессы пользователя одинаково.
+- A user can have several harness containers (`harness-<user>-codex`, `-opencode`…)
+  with a **shared** `workspace-<user>` volume: projects and files are shared, sessions are per harness.
+- The harness is chosen **per chat** (like the model provider today): the picker gets a "Harness" group.
+- Switching the harness in an open chat = a new chat in the same folder (context can be carried over as a summary).
+- Paddock tools are CLI + skill, not MCP: every harness and every model has a shell. The web UI installs them into all of a user's harnesses the same way.
 
-## Кандидаты
+## Candidates
 
-| харнесс | как подключается | статус |
+| harness | how it connects | status |
 |---|---|---|
-| Codex | `codex app-server --listen ws://…` (JSON-RPC) | ✅ работает |
-| OpenCode | `opencode serve` — HTTP API + SSE, OpenAI-совместимые провайдеры (NeuralDeep сразу) | ⬜ проверить API на живом контейнере |
-| Hermes | агент Nous Research; нужен проверенный способ headless-управления | ⬜ проверить |
-| coddy | ❔ уточнить у Валеры, что имеется в виду | ❔ |
-| PicoClaw | лёгкий агент, модели через litellm/NeuralDeep | ⬜ |
-| pi | pi-coding-agent: минимальный терминальный агент, сессии в `~/.pi/agent/sessions` (agentbelt их уже читает) | ⬜ |
-| omp | oh-my-pi: pi с расширениями и сабагентами, сессии в `~/.omp/agent/sessions` | ⬜ |
+| Codex | `codex app-server --listen ws://…` (JSON-RPC) | ✅ works |
+| OpenCode | `opencode serve` — HTTP API + SSE, OpenAI-compatible providers (NeuralDeep out of the box) | ⬜ verify the API on a live container |
+| Hermes | Nous Research agent; needs a proven way to drive it headless | ⬜ verify |
+| coddy | ❔ ask the owner what is meant | ❔ |
+| PicoClaw | lightweight agent, models via litellm/NeuralDeep | ⬜ |
+| pi | pi-coding-agent: minimal terminal agent, sessions in `~/.pi/agent/sessions` (agentbelt already reads them) | ⬜ |
+| omp | oh-my-pi: pi with extensions and subagents, sessions in `~/.omp/agent/sessions` | ⬜ |
 
-Порядок работ — roadmap 3.7: сначала вынести общий интерфейс из `pane.tsx`/`chat.tsx`
-в `lib/harness/` (адаптер codex = текущий код), потом второй харнесс (OpenCode),
-и только потом смена на лету.
+Order of work is roadmap 3.7: first extract the common interface from `pane.tsx`/`chat.tsx`
+into `lib/harness/` (codex adapter = current code), then a second harness (OpenCode),
+and only then on-the-fly switching.

@@ -7,7 +7,7 @@ updated: 2026-10-29
 
 # services
 
-- [web/](web/README.md) — морда: Next.js, WS-мост к харнессам, вход, супервизор выкатки
-- [harness/](harness/README.md) — контейнер харнесса пользователя (сейчас Codex app-server)
-- [egress/](egress/README.md) — единственный выход в интернет: gost, цепочка прокси, API для морды
-- [edge/](edge/README.md) — nginx, единственная точка входа
+- [web/](web/README.md) — web UI: Next.js, WS bridge to harnesses, login, deploy supervisor
+- [harness/](harness/README.md) — the user's harness container (currently Codex app-server)
+- [egress/](egress/README.md) — the only way out to the internet: gost, proxy chain, API for the web UI
+- [edge/](edge/README.md) — nginx, the single entry point

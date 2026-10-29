@@ -1,7 +1,7 @@
 ---
 node_type: service
-title: egress — выход в интернет
-description: "gost 3: HTTP-прокси :8080 для харнессов и морды, цепочка внешних прокси с failover, API :18080 (только core, с паролем) для вкладки «Прокси»."
+title: egress — the way out to the internet
+description: "gost 3: HTTP proxy :8080 for harnesses and the web UI, a chain of upstream proxies with failover, API :18080 (core only, password-protected) for the Proxy tab."
 service: egress
 status: active
 updated: 2026-10-29
@@ -10,9 +10,9 @@ links:
   relates_to: [../../reference/architecture.md, ../../ops/gotchas.md]
 ---
 
-# egress — выход в интернет
+# egress — the way out to the internet
 
-- Конфиг: `secrets/egress/gost.yaml` (в git не попадает). Цепочка `upstream`, стратегия `fifo`: сверху вниз по приоритету, упавший узел выключается на 60 с.
-- В LAN и на хост не пускает — харнесс не достанет до соседних машин.
-- API gost `:18080` с basic-auth: морда меняет список прокси на лету и сохраняет его обратно в `gost.yaml` (`POST /api/config`). Пароль API — в `secrets/web.env`.
-- Проверка выхода — Настройки → Прокси → «Проверить выход» (ipinfo.io через цепочку).
+- Config: `secrets/egress/gost.yaml` (not in git). Chain `upstream`, strategy `fifo`: top to bottom by priority, a failed node is disabled for 60 s.
+- Blocks LAN and host access, so a harness cannot reach neighboring machines.
+- gost API `:18080` with basic auth: the web UI edits the proxy list on the fly and saves it back to `gost.yaml` (`POST /api/config`). The API password is in `secrets/web.env`.
+- Checking the way out: Settings → Proxy → "Check egress" (ipinfo.io through the chain).

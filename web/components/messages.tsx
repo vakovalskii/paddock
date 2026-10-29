@@ -24,10 +24,10 @@ export function UserMessage() {
         <MessagePrimitive.Parts components={{ Image: UserImage }} />
       </div>
       <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-        <ActionBarPrimitive.Edit className={iconBtn} title={t("Изменить и переотправить")}>
+        <ActionBarPrimitive.Edit className={iconBtn} title={t("Edit and resend")}>
           <Icon name="pencil" size={14} />
         </ActionBarPrimitive.Edit>
-        <ActionBarPrimitive.Copy className={iconBtn} title={t("Копировать")}>
+        <ActionBarPrimitive.Copy className={iconBtn} title={t("Copy")}>
           <Icon name="copy" size={14} />
         </ActionBarPrimitive.Copy>
       </ActionBarPrimitive.Root>
@@ -45,11 +45,11 @@ export function UserEditComposer() {
     <ComposerPrimitive.Root className="ml-auto w-full max-w-[85%] rounded-2xl border border-[var(--accent)]/50 bg-[var(--panel)] p-2 shadow-[0_0_0_4px_rgb(255_138_61/0.08)]">
       <ComposerPrimitive.Input autoFocus className="max-h-72 w-full resize-none bg-transparent px-2 py-1.5 leading-relaxed outline-none" />
       <div className="flex items-center justify-between gap-2 px-1 pt-1">
-        <span className="text-xs text-[var(--faint)]">{t("История после этого сообщения будет отброшена")}</span>
+        <span className="text-xs text-[var(--faint)]">{t("History after this message will be discarded")}</span>
         <div className="flex gap-1.5">
-          <ComposerPrimitive.Cancel className="rounded-lg px-3 py-1 text-sm text-[var(--muted)] hover:bg-[var(--panel-2)]">{t("Отмена")}</ComposerPrimitive.Cancel>
+          <ComposerPrimitive.Cancel className="rounded-lg px-3 py-1 text-sm text-[var(--muted)] hover:bg-[var(--panel-2)]">{t("Cancel")}</ComposerPrimitive.Cancel>
           <ComposerPrimitive.Send className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 text-sm font-medium text-black">
-            {t("Отправить")}
+            {t("Send")}
           </ComposerPrimitive.Send>
         </div>
       </div>
@@ -91,13 +91,13 @@ function AssistantFooter() {
       {meta.model && <span className="text-[var(--muted)]">{meta.model}</span>}
       {meta.effort && <span>{meta.effort}</span>}
       {elapsed != null && <span className={running ? "text-[var(--accent)]" : ""}>{fmtDuration(elapsed)}</span>}
-      {ttft != null && <span title={t("время до первого токена: от отправки до начала ответа модели")}>TTFT {fmtDuration(ttft)}</span>}
-      {speed != null && <span title={t("{n} выходных токенов за {time} без учёта инструментов", { n: meta.outTokens ?? 0, time: fmtDuration(genMs) })}>{speed} tok/s</span>}
+      {ttft != null && <span title={t("time to first token: from sending to the start of the model's reply")}>TTFT {fmtDuration(ttft)}</span>}
+      {speed != null && <span title={t("{n} output tokens in {time}, excluding tools", { n: meta.outTokens ?? 0, time: fmtDuration(genMs) })}>{speed} tok/s</span>}
       <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="ml-1 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-        <ActionBarPrimitive.Copy className={iconBtn} title={t("Копировать ответ")}>
+        <ActionBarPrimitive.Copy className={iconBtn} title={t("Copy reply")}>
           <Icon name="copy" size={14} />
         </ActionBarPrimitive.Copy>
-        <ActionBarPrimitive.Reload className={iconBtn} title={t("Ответить заново")}>
+        <ActionBarPrimitive.Reload className={iconBtn} title={t("Regenerate")}>
           <Icon name="refresh" size={14} />
         </ActionBarPrimitive.Reload>
       </ActionBarPrimitive.Root>
@@ -147,7 +147,7 @@ function ToolCard({ args, argsText, result, isError }: ToolCallMessagePartProps)
         <Icon name={look.icon} size={14} style={{ color: look.tint }} className="shrink-0" />
         <span className="shrink-0 font-medium" style={{ color: look.tint }}>{a.verb ?? look.label}</span>
         <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-[var(--fg)]/85">{a.title}</span>
-        {a.links && a.links.length > 0 && <span className="shrink-0 font-mono text-[11px] text-[var(--faint)]">{t("{n} рез.", { n: a.links.length })}</span>}
+        {a.links && a.links.length > 0 && <span className="shrink-0 font-mono text-[11px] text-[var(--faint)]">{t("{n} results", { n: a.links.length })}</span>}
         {!!a.durationMs && <span className="shrink-0 font-mono text-[11px] text-[var(--faint)]">{fmtDuration(a.durationMs)}</span>}
         <span className="shrink-0">
           {pending ? (
@@ -173,7 +173,7 @@ function ToolCard({ args, argsText, result, isError }: ToolCallMessagePartProps)
             <>
           {detail && <div className="mb-2 whitespace-pre-wrap text-[var(--muted)]">$ {detail}</div>}
           {a.kind === "shell" && <div className="mb-2 whitespace-pre-wrap text-[var(--accent)]">$ {argsText}</div>}
-          {a.diff ? <Diff text={out} /> : <pre className="whitespace-pre-wrap break-words">{out || (pending ? "…" : t("(пусто)"))}</pre>}
+          {a.diff ? <Diff text={out} /> : <pre className="whitespace-pre-wrap break-words">{out || (pending ? "…" : t("(empty)"))}</pre>}
             </>
           )}
         </div>
@@ -183,7 +183,7 @@ function ToolCard({ args, argsText, result, isError }: ToolCallMessagePartProps)
 }
 
 function WebResults({ links }: { links: NonNullable<ToolArgs["links"]> }) {
-  if (links.length === 0) return <div className="text-[var(--faint)]">{t("ничего не нашлось")}</div>;
+  if (links.length === 0) return <div className="text-[var(--faint)]">{t("nothing found")}</div>;
   return (
     <div className="space-y-2 font-sans text-[13px]">
       {links.map((l, i) => (
@@ -223,16 +223,16 @@ export function Approval({ req, onAnswer }: { req: ServerRequest; onAnswer: (r: 
   const btn = "rounded-lg border border-[var(--border)] px-3 py-1 hover:bg-[var(--panel)]";
   return (
     <div className="rounded-xl border border-[var(--yellow)]/40 bg-[var(--yellow)]/[0.06] p-3 text-sm">
-      <div className="mb-2 font-medium text-[var(--yellow)]">{t("Codex просит разрешения")}</div>
+      <div className="mb-2 font-medium text-[var(--yellow)]">{t("Codex is asking for permission")}</div>
       <pre className="mb-3 overflow-auto font-mono text-xs whitespace-pre-wrap">{what}</pre>
       {known ? (
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => onAnswer(req, { decision: "accept" })} className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 font-medium text-black">{t("Разрешить")}</button>
-          <button onClick={() => onAnswer(req, { decision: "acceptForSession" })} className={btn}>{t("На всю сессию")}</button>
-          <button onClick={() => onAnswer(req, { decision: "decline" })} className={btn}>{t("Отказать")}</button>
+          <button onClick={() => onAnswer(req, { decision: "accept" })} className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 font-medium text-black">{t("Allow")}</button>
+          <button onClick={() => onAnswer(req, { decision: "acceptForSession" })} className={btn}>{t("For this session")}</button>
+          <button onClick={() => onAnswer(req, { decision: "decline" })} className={btn}>{t("Deny")}</button>
         </div>
       ) : (
-        <p className="text-xs text-[var(--muted)]">{t("Тип запроса «{method}» морда пока не умеет — Codex может доделать её сам.", { method: req.method })}</p>
+        <p className="text-xs text-[var(--muted)]">{t("The UI doesn't support “{method}” requests yet — Codex can add it itself.", { method: req.method })}</p>
       )}
     </div>
   );
@@ -249,7 +249,7 @@ function Elicitation({ req, onAnswer }: { req: ServerRequest; onAnswer: (r: Serv
   const field = "rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-xs";
   return (
     <div className="rounded-xl border border-[var(--yellow)]/40 bg-[var(--yellow)]/[0.06] p-3 text-sm">
-      <div className="mb-1 font-medium text-[var(--yellow)]">{t("Вопрос от инструмента")} <span className="font-mono">{p.serverName}</span></div>
+      <div className="mb-1 font-medium text-[var(--yellow)]">{t("Question from tool")} <span className="font-mono">{p.serverName}</span></div>
       <div className="mb-3 whitespace-pre-wrap text-[13px]">{p.message}</div>
       {p.mode === "url" && <a href={p.url} target="_blank" rel="noreferrer noopener" className="mb-3 block font-mono text-xs text-[var(--accent)] underline">{p.url}</a>}
       {Object.keys(props).length > 0 && (
@@ -272,8 +272,8 @@ function Elicitation({ req, onAnswer }: { req: ServerRequest; onAnswer: (r: Serv
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => reply("accept")} className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 font-medium text-black">{t("Разрешить")}</button>
-        <button onClick={() => reply("decline")} className="rounded-lg border border-[var(--border)] px-3 py-1 hover:bg-[var(--panel)]">{t("Отказать")}</button>
+        <button onClick={() => reply("accept")} className="rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1 font-medium text-black">{t("Allow")}</button>
+        <button onClick={() => reply("decline")} className="rounded-lg border border-[var(--border)] px-3 py-1 hover:bg-[var(--panel)]">{t("Deny")}</button>
       </div>
     </div>
   );

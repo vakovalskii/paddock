@@ -1,7 +1,7 @@
 ---
 node_type: service
-title: web — морда
-description: "Next.js + assistant-ui: окна чатов, statusline, настройки; server.ts держит WS-мост к харнессам; supervisor.sh собирает и переключает версии."
+title: web — the web UI
+description: "Next.js + assistant-ui: chat panes, statusline, settings; server.ts holds the WS bridge to harnesses; supervisor.sh builds and switches versions."
 service: web
 status: active
 updated: 2026-10-29
@@ -10,18 +10,18 @@ links:
   relates_to: [../../reference/architecture.md, ../../ops/deploy.md]
 ---
 
-# web — морда
+# web — the web UI
 
-| файл | что |
+| file | what |
 |---|---|
-| `web/server.ts` | HTTP + `/ws/codex`: проверка cookie-сессии и Origin, токен пользователя добавляется на стороне сервера |
-| `web/components/chat.tsx` | рабочая область: соединение, сайдбар, раскладка 1/2/4, перетаскивание, границы, файлы |
-| `web/components/pane.tsx` | одно окно: тред, ходы, правка, модель, композер, statusline |
-| `web/lib/messages.ts` | события харнесса → сообщения и карточки инструментов |
-| `web/components/settings.tsx` | аккаунт, NeuralDeep, Codex, прокси, пароль (картинки — в работе) |
-| `web/lib/proxy.ts` | API gost (только admin), запросы наружу через egress |
-| `web/tools/` | реестр инструментов Paddock (CLI + скилл), морда ставит их в харнесс, см. `web/tools/README.md` |
-| `web/lib/turn-meta.ts` | таблица `turn_meta` в `/data/auth.db`: модель, TTFT, tok/s, последний расход хода |
-| `web/supervisor.sh` | сборка рядом со старой, переключение только при живом `/login`, откат |
+| `web/server.ts` | HTTP + `/ws/codex`: checks the cookie session and Origin; the user's token is added server-side |
+| `web/components/chat.tsx` | workspace: connection, sidebar, 1/2/4 layout, drag and drop, borders, files |
+| `web/components/pane.tsx` | a single pane: thread, turns, editing, model, composer, statusline |
+| `web/lib/messages.ts` | harness events → messages and tool cards |
+| `web/components/settings.tsx` | account, NeuralDeep, Codex, proxy, password (images — in progress) |
+| `web/lib/proxy.ts` | gost API (admin only), outbound requests through egress |
+| `web/tools/` | registry of Paddock tools (CLI + skill); the web UI installs them into the harness, see `web/tools/README.md` |
+| `web/lib/turn-meta.ts` | `turn_meta` table in `/data/auth.db`: model, TTFT, tok/s, last usage of a turn |
+| `web/supervisor.sh` | builds next to the old version, switches only when `/login` is alive, rolls back |
 
-Админ задаётся `ADMIN_USERS` в `secrets/web.env`. Выкатка — [ops/deploy.md](../../ops/deploy.md).
+The admin is set by `ADMIN_USERS` in `secrets/web.env`. Deploy: [ops/deploy.md](../../ops/deploy.md).

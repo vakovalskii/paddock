@@ -6,9 +6,9 @@ import { Icon } from "./icons";
 import { FileView } from "./markdown";
 
 const mark = {
-  add: { sign: "A", color: "var(--green)", title: "создан" },
-  update: { sign: "M", color: "var(--yellow)", title: "изменён" },
-  delete: { sign: "D", color: "var(--red)", title: "удалён" },
+  add: { sign: "A", color: "var(--green)", title: "added" },
+  update: { sign: "M", color: "var(--yellow)", title: "modified" },
+  delete: { sign: "D", color: "var(--red)", title: "deleted" },
 } as const;
 
 export function FilesPanel({ files, cwd, readFile }: {
@@ -35,18 +35,18 @@ export function FilesPanel({ files, cwd, readFile }: {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-[var(--border)]/60 px-3">
         {file ? (
-          <button onClick={() => setSelected(null)} className="rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--panel)]" title={t("К списку")}>
+          <button onClick={() => setSelected(null)} className="rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--panel)]" title={t("Back to list")}>
             <Icon name="chevron" size={15} className="rotate-90" />
           </button>
         ) : (
           <Icon name="file" size={15} className="ml-1.5 text-[var(--teal)]" />
         )}
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{file ? rel(file.path) : t("Файлы · {n}", { n: files.length })}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">{file ? rel(file.path) : t("Files · {n}", { n: files.length })}</span>
         {file && (
           <div className="flex rounded-lg bg-[var(--panel)] p-0.5 text-xs">
             {(["diff", "file"] as const).map((tb) => (
               <button key={tb} onClick={() => setTab(tb)} className={`rounded-md px-2.5 py-1 ${tab === tb ? "bg-[var(--panel-2)] text-[var(--fg)]" : "text-[var(--muted)]"}`}>
-                {tb === "diff" ? t("Дифф") : t("Файл")}
+                {tb === "diff" ? t("Diff") : t("File")}
               </button>
             ))}
           </div>
@@ -56,7 +56,7 @@ export function FilesPanel({ files, cwd, readFile }: {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {!file && (
           <div className="p-2">
-            {files.length === 0 && <p className="px-2 py-3 text-sm text-[var(--faint)]">{t("Codex пока не менял файлы в этом чате.")}</p>}
+            {files.length === 0 && <p className="px-2 py-3 text-sm text-[var(--faint)]">{t("Codex hasn't changed any files in this chat yet.")}</p>}
             {files.map((f) => (
               <button key={f.path} onClick={() => { setSelected(f.path); setTab(f.kind === "delete" ? "diff" : "diff"); }}
                 className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left hover:bg-[var(--panel)]">
@@ -69,7 +69,7 @@ export function FilesPanel({ files, cwd, readFile }: {
               </button>
             ))}
             {files.length > 0 && (
-              <p className="px-2.5 pt-3 text-[11px] leading-snug text-[var(--faint)]">{t("Здесь правки через apply_patch. Файлы, записанные shell-командами, сюда не попадают.")}</p>
+              <p className="px-2.5 pt-3 text-[11px] leading-snug text-[var(--faint)]">{t("Shows edits made via apply_patch. Files written by shell commands don't appear here.")}</p>
             )}
           </div>
         )}
@@ -80,7 +80,7 @@ export function FilesPanel({ files, cwd, readFile }: {
 
         {file && tab === "diff" && !(file.kind === "add" && !/^(@@|---|\+\+\+|diff )/m.test(file.diff)) && (
           <pre className="p-3 font-mono text-[12px] leading-relaxed">
-            {(file.diff || t("(дифф пуст)")).split("\n").map((l, i) => {
+            {(file.diff || t("(empty diff)")).split("\n").map((l, i) => {
               const c = l.startsWith("+") && !l.startsWith("+++") ? "text-[var(--green)] bg-[var(--green)]/5"
                 : l.startsWith("-") && !l.startsWith("---") ? "text-[var(--red)] bg-[var(--red)]/5"
                 : l.startsWith("@@") ? "text-[var(--blue)]" : "text-[var(--muted)]";
@@ -91,8 +91,8 @@ export function FilesPanel({ files, cwd, readFile }: {
 
         {file && tab === "file" && (
           <div className="p-3">
-            {file.kind === "delete" ? <p className="text-sm text-[var(--faint)]">{t("Файл удалён.")}</p>
-              : !content || content.path !== file.path ? <p className="text-sm text-[var(--faint)]">{t("читаю…")}</p>
+            {file.kind === "delete" ? <p className="text-sm text-[var(--faint)]">{t("File deleted.")}</p>
+              : !content || content.path !== file.path ? <p className="text-sm text-[var(--faint)]">{t("reading…")}</p>
               : "error" in content ? <p className="text-sm text-[var(--red)]">{content.error}</p>
               : <FileView path={file.path} content={content.text} />}
           </div>

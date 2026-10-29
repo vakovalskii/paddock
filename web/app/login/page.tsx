@@ -28,7 +28,7 @@ export default function Login() {
         ? await authClient.twoFactor.verifyTotp({ code, trustDevice })
         : await authClient.twoFactor.verifyBackupCode({ code, trustDevice });
       setBusy(false);
-      if (error) setError(error.status === 429 ? t("Слишком много попыток, подожди минуту") : t("Код не подошёл"));
+      if (error) setError(error.status === 429 ? t("Too many attempts, wait a minute") : t("Invalid code"));
       else window.location.href = "/";
       return;
     }
@@ -38,7 +38,7 @@ export default function Login() {
       rememberMe: remember,
     });
     setBusy(false);
-    if (error) setError(error.status === 401 ? t("Неверная почта или пароль") : error.status === 429 ? t("Слишком много попыток, подожди минуту") : error.message ?? t("Не получилось войти"));
+    if (error) setError(error.status === 401 ? t("Wrong email or password") : error.status === 429 ? t("Too many attempts, wait a minute") : error.message ?? t("Couldn't sign in"));
     else if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) setNeedCode(true);
     else window.location.href = "/";
   }
@@ -55,7 +55,7 @@ export default function Login() {
         {/* key у полей обязательны: без них React отдаёт поле пароля под код, и пароль виден открытым текстом. */}
         {needCode ? (
           <>
-            <p className="text-sm text-[var(--muted)]">{t("Код из приложения-аутентификатора (Authy) или резервный код.")}</p>
+            <p className="text-sm text-[var(--muted)]">{t("Code from your authenticator app (Authy) or a backup code.")}</p>
             <input key="code" name="code" defaultValue="" inputMode="numeric" autoComplete="one-time-code" placeholder="123 456" required autoFocus
               className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-center font-mono text-lg tracking-[0.3em] outline-none focus:border-[var(--accent)]/50" />
           </>
@@ -63,24 +63,24 @@ export default function Login() {
           <>
             <input key="email" name="email" type="email" autoComplete="username" placeholder={t("email")} required
               className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--accent)]/50" />
-            <input key="password" name="password" type="password" autoComplete="current-password" placeholder={t("пароль")} required
+            <input key="password" name="password" type="password" autoComplete="current-password" placeholder={t("password")} required
               className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 outline-none focus:border-[var(--accent)]/50" />
           </>
         )}
         {!needCode && (
           <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
             <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
-            {t("Запомнить этот браузер на 30 дней")}
+            {t("Remember this browser for 30 days")}
           </label>
         )}
         {error && <p className="text-sm text-red-500">{error}</p>}
         <button disabled={busy} className="w-full rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-2 font-medium text-black disabled:opacity-50">
-          {busy ? "…" : needCode ? t("Подтвердить") : t("Войти")}
+          {busy ? "…" : needCode ? t("Verify") : t("Sign in")}
         </button>
       </form>
       <div className="flex gap-1 font-mono text-xs" data-lang-toggle>
         {(["ru", "en"] as const).map((l) => (
-          <button key={l} type="button" onClick={() => l !== getLang() && setLang(l)} title={t("Язык интерфейса")}
+          <button key={l} type="button" onClick={() => l !== getLang() && setLang(l)} title={t("Interface language")}
             className={`rounded-md px-2 py-1 ${l === getLang() ? "bg-[var(--panel)] text-[var(--fg)]" : "text-[var(--faint)] hover:text-[var(--fg)]"}`}>
             {l.toUpperCase()}
           </button>

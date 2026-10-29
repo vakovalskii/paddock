@@ -3,11 +3,11 @@ import { t } from "./i18n";
 export const fmtTokens = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
 
 export function fmtDuration(ms: number): string {
-  if (ms < 1000) return t("{n} мс", { n: ms });
+  if (ms < 1000) return t("{n} ms", { n: ms });
   const s = ms / 1000;
-  if (s < 60) return t("{n} с", { n: s.toFixed(s < 10 ? 1 : 0) });
+  if (s < 60) return t("{n} s", { n: s.toFixed(s < 10 ? 1 : 0) });
   const m = Math.floor(s / 60);
-  return t("{m} мин {s} с", { m, s: Math.round(s % 60) });
+  return t("{m} min {s} s", { m, s: Math.round(s % 60) });
 }
 
 // 10080 → "7d", 300 → "5h"
@@ -32,9 +32,9 @@ export function dayGroup(unixSec: number): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = (today.getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 86400000;
-  if (diff <= 0) return t("Сегодня");
-  if (diff === 1) return t("Вчера");
-  if (diff < 7) return t("На этой неделе");
-  if (diff < 31) return t("В этом месяце");
-  return t("Раньше");
+  if (diff <= 0) return t("Today");
+  if (diff === 1) return t("Yesterday");
+  if (diff < 7) return t("This week");
+  if (diff < 31) return t("This month");
+  return t("Earlier");
 }

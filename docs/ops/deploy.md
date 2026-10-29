@@ -1,7 +1,7 @@
 ---
 node_type: runbook
-title: Поднять и выкатить
-description: "Первый запуск на сервере с docker compose и выкатка новой версии морды через супервизор."
+title: Bring up and deploy
+description: "First launch on a server with docker compose, and deploying a new version of the web UI through the supervisor."
 service: _platform
 status: active
 updated: 2026-10-29
@@ -9,27 +9,27 @@ links:
   documents: [../../docker-compose.yml, ../../web/supervisor.sh]
 ---
 
-# Поднять и выкатить
+# Bring up and deploy
 
-## С нуля
+## From scratch
 
 ```bash
 git clone https://github.com/vakovalskii/paddock && cd paddock
 mkdir -p secrets/egress secrets/tokens && chmod 700 secrets
-# secrets/egress/gost.yaml — цепочка прокси (пример в docs/services/egress), + блок api с паролем
+# secrets/egress/gost.yaml — proxy chain (example in docs/services/egress), plus an api block with a password
 # secrets/web.env:
 #   BETTER_AUTH_SECRET=<openssl rand -hex 32>
 #   PUBLIC_URL=http://localhost:8088
-#   GOST_API=http://egress:18080/api  GOST_API_USER=hub  GOST_API_PASS=<как в gost.yaml>
-#   ADMIN_USERS=<имя>
-./add-user.sh <имя> --admin
+#   GOST_API=http://egress:18080/api  GOST_API_USER=hub  GOST_API_PASS=<same as in gost.yaml>
+#   ADMIN_USERS=<name>
+./add-user.sh <name> --admin
 docker compose up -d --build
-docker compose exec -w /build/current web npm run create-user -- <имя>@hub.local '<пароль 12+>'
+docker compose exec -w /build/current web npm run create-user -- <name>@hub.local '<password, 12+ chars>'
 ```
 
-Дальше вход в ChatGPT — из морды: Настройки → Аккаунт ChatGPT → «Получить код».
+Then log in to ChatGPT from the web UI: Settings → ChatGPT account → "Get code".
 
-## Новая версия морды
+## New version of the web UI
 
 ```bash
 rsync -az --exclude node_modules --exclude .next web/ server:paddock/web/
@@ -37,11 +37,11 @@ ssh server 'date +%s > paddock/web/.deploy-request'
 ssh server 'cat paddock/web/.deploy-status'   # building → deployed / build FAILED / rolled back
 ```
 
-То же делает сам Codex админа изнутри: исходники примонтированы ему в `/workspace/paddock-web`.
+The admin's own Codex does the same from inside: the UI sources are mounted for it at `/workspace/paddock-web`.
 
-## Проверка
+## Checks
 
 ```bash
-HUB_PASS=... node tests/ui-tour.mjs /tmp/tour     # 18 шагов по всей морде
-HUB_PASS=... node tests/grid-edges.mjs            # 22 проверки сетки окон
+HUB_PASS=... node tests/ui-tour.mjs /tmp/tour     # 18 steps across the whole web UI
+HUB_PASS=... node tests/grid-edges.mjs            # 22 checks of the pane grid
 ```

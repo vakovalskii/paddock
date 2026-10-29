@@ -1,7 +1,7 @@
 ---
 node_type: decision
-title: Готовые харнессы вместо своего агента
-description: "Paddock — оболочка и инфраструктура вокруг существующих агентов (Codex, OpenCode, Hermes), а не новый агентный движок."
+title: Existing harnesses instead of our own agent
+description: "Paddock is a shell and infrastructure around existing agents (Codex, OpenCode, Hermes), not a new agent engine."
 service: harness
 status: active
 updated: 2026-10-29
@@ -9,11 +9,11 @@ links:
   relates_to: [../reference/harness-protocol.md]
 ---
 
-# Готовые харнессы вместо своего агента
+# Existing harnesses instead of our own agent
 
-**Решение.** Не писать агентный цикл. Брать харнесс как есть (сейчас Codex app-server)
-и добавлять то, чего нет в терминале: веб-доступ, несколько окон, изоляцию, прокси,
-общие скиллы. Следующие харнессы — через адаптер к общему протоколу морды.
+**Decision.** Do not write an agent loop. Take a harness as is (currently Codex app-server)
+and add what the terminal lacks: web access, multiple panes, isolation, a proxy,
+shared skills. Further harnesses plug in through an adapter to the common web UI protocol.
 
-**Почему.** Харнессы быстро развиваются сами (инструменты, модели, сжатие контекста);
-свой агент пришлось бы догонять. Ценность Paddock — в связке и удобстве, а не в агенте.
+**Why.** Harnesses evolve quickly on their own (tools, models, context compaction);
+our own agent would always be catching up. Paddock's value is in the integration and convenience, not in the agent.

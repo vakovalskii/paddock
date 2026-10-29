@@ -1,7 +1,7 @@
 ---
 node_type: plan
-title: Paddock — план работ
-description: "Всё, что попросил Валера за сессию 2026-10-28/29: что сделано, что в работе, что дальше, в каком порядке и как проверяется."
+title: Paddock — work plan
+description: "Everything the owner asked for during the 2026-10-28/29 session: what is done, what is in progress, what is next, in what order and how it is verified."
 service: _platform
 status: active
 updated: 2026-10-29
@@ -11,106 +11,108 @@ links:
   part_of: [README.md]
 ---
 
-# Paddock — план работ
+# Paddock — work plan
 
-Идея проекта: **простое решение, которое переносит в браузер то, как Валера работает в iTerm**:
-несколько агентов параллельно, у каждого своя сессия, statusline со всеми цифрами, быстрые
-действия, без лишних абстракций. Каждый пользователь получает изолированный контейнер
-с харнессом (сейчас Codex), веб-морда — одна. См. [architecture.md](../reference/architecture.md).
+Tracking moved to GitHub issues: https://github.com/vakovalskii/paddock/issues — this file is the narrative plan.
 
-Статусы: ✅ сделано и проверено · 🟡 в работе · ⬜ не начато · ❔ нужно решение Валеры.
+The idea: **a simple solution that brings to the browser the way the owner works in iTerm**:
+several agents in parallel, each with its own session, a statusline with all the numbers, quick
+actions, no unnecessary abstractions. Each user gets an isolated container
+with a harness (currently Codex); there is one web UI. See [architecture.md](../reference/architecture.md).
 
-## 1. Уже есть (проверено e2e: `tests/ui-tour.mjs`, `tests/grid-edges.mjs`)
+Statuses: ✅ done and verified · 🟡 in progress · ⬜ not started · ❔ needs the owner's decision.
 
-| что | как проверено |
+## 1. Already there (verified e2e: `tests/ui-tour.mjs`, `tests/grid-edges.mjs`)
+
+| what | how verified |
 |---|---|
-| ✅ Изоляция: контейнер на пользователя, наружу только через egress-прокси, LAN/хост закрыты | ручные проверки из контейнера |
-| ✅ Вход по паролю, регистрации нет, Origin/сессия на WS, токены харнесса не уходят в браузер | 401/403 проверки, tour |
-| ✅ Чат: стрим, markdown, подсветка кода, карточки инструментов, результаты веб-поиска, diff | tour |
-| ✅ Под ответом модель, усилие, время хода (живой таймер) | tour |
-| ✅ Правка сообщения и «ответить заново» (thread/revert) | tour |
-| ✅ Выбор модели и усилия; модели NeuralDeep по ключу (Responses API) | tour, ручной тест Валеры |
-| ✅ Статус-бар как statusline: модель, папка, контекст, кеш, лимит 7d | tour |
-| ✅ Лимиты подписки, бесплатные сбросы (применение с подтверждением), расход по дням | tour |
-| ✅ Настройки: вход в ChatGPT по коду устройства, API-ключ, config.toml, прокси (admin), NeuralDeep, пароль | tour |
-| ✅ До 4 чатов на экране: перетаскивание, границы, Alt+1…4, восстановление после перезагрузки | grid-edges (22 проверки) |
-| ✅ Панель изменённых файлов (apply_patch): дифф и содержимое | tour |
-| ✅ Новый чат в папке workspace, создание папки, архив чатов | tour |
-| ✅ Плашка «вышла новая версия», самовыкатка морды самим Codex с откатом | ручная |
+| ✅ Isolation: a container per user, outbound only through the egress proxy, LAN/host closed | manual checks from the container |
+| ✅ Password login, no sign-up, Origin/session check on WS, harness tokens never reach the browser | 401/403 checks, tour |
+| ✅ Chat: streaming, markdown, code highlighting, tool cards, web search results, diff | tour |
+| ✅ Under each answer: model, reasoning effort, turn time (live timer) | tour |
+| ✅ Editing a message and "regenerate" (thread/revert) | tour |
+| ✅ Model and effort picker; NeuralDeep models by API key (Responses API) | tour, manual test by the owner |
+| ✅ Status bar as a statusline: model, folder, context, cache, 7d limit | tour |
+| ✅ Subscription limits, free resets (applied after confirmation), usage per day | tour |
+| ✅ Settings: ChatGPT login by device code, API key, config.toml, proxy (admin), NeuralDeep, password | tour |
+| ✅ Up to 4 chats on screen: drag and drop, borders, Alt+1…4, restored after reload | grid-edges (22 checks) |
+| ✅ Changed-files panel (apply_patch): diff and contents | tour |
+| ✅ New chat in a workspace folder, folder creation, chat archive | tour |
+| ✅ "New version available" banner, self-deploy of the web UI by Codex itself with rollback | manual |
 
-## 2. В работе
+## 2. In progress
 
-| # | задача | детали | готово, когда |
+| # | task | details | done when |
 |---|---|---|---|
-| ✅ 2.1 | **Картинки через CLI** | команда `paddock-images generate/edit` (NeuralDeep) + скилл; MCP убран — у моделей NeuralDeep он не работает, а shell есть у любого харнесса. Прокси для shell — `shell_environment_policy.set` | картинка рисуется и на gpt, и на qwen (NeuralDeep), миниатюра в чате |
-| ✅ 2.2 | **Скорость и TTFT под ответом, хранятся на сервере** | `TTFT`, `N tok/s` = выходные токены / время от первого токена без инструментов; таблица `turn_meta` в SQLite морды, там же последний расход для статус-бара после перезагрузки | видно под каждым новым ответом |
-| ✅ 2.3 | **Реестр инструментов (харнесс-агностик)** | вкладка «Инструменты» в настройках: каталог CLI-инструментов Paddock (картинки, дальше другие) и скиллов — установлены / включены, вкл-выкл, версия. Один источник в морде, ставится во **все** харнессы пользователя одинаково (файл + скилл в доме харнесса) | вкл/выкл из морды, видно на любом харнессе |
-| ✅ 2.4 | **Что активно в сессии** | в окне чата (статус-бар → поповер): какие скиллы и CLI доступны этому треду, какие реально вызывались | у каждого окна свой список |
-| ✅ 2.9 | **Баг: сообщение не видно в нижнем окне** | после открытия чата окно стояло выше низа, автопрокрутка не включалась; плюс пузырь появлялся только после ответа сервера. Прижимаем вниз при открытии и отправке, пузырь сразу | `tests/grid-edges.mjs` п. 12 |
-| ⬜ 2.5 | **Английский** | репо, README и docs на английском; UI с переключателем RU/EN (i18n-словарь, без библиотек); схема «как всё работает» | всё на EN, переключатель в настройках |
-| ✅ 2.6 | **Ребрендинг UI** | «Codex Hub» → «Paddock» в заголовке, сайдбаре, логине; ключи localStorage с миграцией | нигде нет «Codex Hub» |
-| ⬜ 2.7 | **Скриншоты из реальных сессий** | EN UI: 1 окно, 4 окна, генерация картинки, настройки — `tests/images-and-screens.mjs` | картинки в README |
-| ⬜ 2.8 | **Открытый репо `vakovalskii/paddock`** | новая история без старых коммитов (в них был реальный IP прокси), проверка на секреты, MIT | репо публичный |
+| ✅ 2.1 | **Images via CLI** | `paddock-images generate/edit` command (NeuralDeep) + a skill; MCP removed — it does not work with NeuralDeep models, while every harness has a shell. Proxy for the shell via `shell_environment_policy.set` | an image is generated with both gpt and qwen (NeuralDeep), thumbnail in the chat |
+| ✅ 2.2 | **Speed and TTFT under each answer, stored server-side** | `TTFT`, `N tok/s` = output tokens / time since the first token excluding tools; `turn_meta` table in the web UI's SQLite, which also keeps the last usage for the status bar after reload | visible under every new answer |
+| ✅ 2.3 | **Tool registry (harness-agnostic)** | "Tools" tab in settings: catalog of Paddock CLI tools (images, more later) and skills — installed / enabled, on/off, version. One source in the web UI, installed into **all** of a user's harnesses the same way (file + skill in the harness home) | on/off from the web UI, visible on any harness |
+| ✅ 2.4 | **What is active in a session** | in the chat pane (status bar → popover): which skills and CLIs this thread has, which were actually called | each pane has its own list |
+| ✅ 2.9 | **Bug: message not visible in the bottom pane** | after opening a chat the pane was scrolled above the bottom and autoscroll did not kick in; also the bubble appeared only after the server replied. Now we stick to the bottom on open and on send, and show the bubble immediately | `tests/grid-edges.mjs` item 12 |
+| ⬜ 2.5 | **English** | repo, README and docs in English; UI with an RU/EN switch (i18n dictionary, no libraries); a "how it all works" diagram | everything in EN, switch in settings |
+| ✅ 2.6 | **UI rebranding** | "Codex Hub" → "Paddock" in the title, sidebar, login; localStorage keys with migration | "Codex Hub" appears nowhere |
+| ⬜ 2.7 | **Screenshots from real sessions** | EN UI: 1 pane, 4 panes, image generation, settings — `tests/images-and-screens.mjs` | images in the README |
+| ⬜ 2.8 | **Public repo `vakovalskii/paddock`** | fresh history without the old commits (they contained a real proxy IP), secret scan, MIT | repo is public |
 
-## 3. Дальше — по порядку
+## 3. Next — in order
 
-| # | задача | детали | ❔ |
+| # | task | details | ❔ |
 |---|---|---|---|
-| ✅ 3.1 | **Вставка картинки → редактор** | Cmd+V картинки в поле ввода открывает редактор как в macOS: карандаш, овал, прямоугольник, стрелка, текст, обрезка, поворот, отмена, 7 цветов, Cancel/Done. Результат — миниатюра в поле ввода и в сообщении; файл в `<cwd>/.paddock/uploads/<тред>/`, в ход уходит `localImage` | |
-| ✅ 3.2 | **Ответить на выделенное** | выделил текст ответа → кнопка «Ответить на выделенное» вставляет цитату `> …` в поле ввода; выделение заодно копируется в буфер (как мод quote-reply в Claude Code) | |
-| ✅ 3.3 | **Сворачивание длинных вставок** | вставка больше ~10 строк превращается в чип `[Pasted text #N +36 lines]` (раскрыть/удалить), в ход уходит полный текст — как в Claude Code | |
-| ✅ 3.4 | **Правая панель «как agentbelt»** | вкладки рядом с «Файлами»: **Сеть** (каждый прокси × chatgpt.com / api.openai.com / api.neuraldeep.ru: задержка, dead), **Действия** (лента shell/edit/read/web со счётчиками, фильтр), **Сессии** (окна и их треды, снимки раскладок) | |
-| ⬜ 3.5 | **Хранилище** | вкладка в настройках + предупреждение в статус-баре при <10% диска: диск, сервис (сборки, кеш, БД), у пользователя — сессии/архив/workspace/картинки | |
-| ⬜ 3.6 | **Срок хранения сессий** | автоархив чатов старше N дней, удаление архива старше M; по умолчанию выключено | N и M |
-| ⬜ 3.7 | **Сменные харнессы** | адаптер на харнесс (Codex, OpenCode, Hermes, PicoClaw, coddy), выбор на чат и смена на лету. См. [harness-protocol.md](../reference/harness-protocol.md) | что такое «coddy»? |
-| ⬜ 3.8 | **Мобильность** | `paddock export <user>` / `import` томов, одна команда поднять всё на новом хосте | |
-| ⬜ 3.9 | **Изоляция пользователей по сети** | отдельная сеть на пользователя; общение агентов только через морду («почтовый ящик») | |
-| ⬜ 3.10 | **Публичный доступ** | Traefik на входе в офис, домен + HTTPS | токен Cloudflare, доступ к MikroTik |
-| ✅ 3.11 | 2FA (TOTP: Authy и др.) на вход | плагин better-auth, QR в настройках, резервные коды, доверенный браузер 30 дней; `tests/two-factor.mjs`. Passkey — позже | |
-| ⬜ 3.12 | Ротация `~/.codex` (логи sqlite, кеш) | вместе с 3.6 | |
-| ⬜ 3.13 | **Ключи не в контексте модели** | модель NeuralDeep сама вытащила ключ из config.toml и вставила в shell-команду — он лёг в лог сессии. Ключ держать в файле, недоступном агенту на чтение, или выдавать через морду | как прятать |
+| ✅ 3.1 | **Paste an image → editor** | Cmd+V of an image into the input opens a macOS-style editor: pencil, ellipse, rectangle, arrow, text, crop, rotate, undo, 7 colors, Cancel/Done. The result is a thumbnail in the input and in the message; the file goes to `<cwd>/.paddock/uploads/<thread>/`, and the turn gets a `localImage` | |
+| ✅ 3.2 | **Reply to selection** | select text in an answer → a "Reply to selection" button inserts a `> …` quote into the input; the selection is also copied to the clipboard (like the quote-reply mod in Claude Code) | |
+| ✅ 3.3 | **Collapsing long pastes** | a paste longer than ~10 lines becomes a chip `[Pasted text #N +36 lines]` (expand/remove); the full text goes into the turn — like in Claude Code | |
+| ✅ 3.4 | **Right panel "like agentbelt"** | tabs next to "Files": **Network** (each proxy × chatgpt.com / api.openai.com / api.neuraldeep.ru: latency, dead), **Actions** (feed of shell/edit/read/web with counters, filter), **Sessions** (panes and their threads, layout snapshots) | |
+| ⬜ 3.5 | **Storage** | a settings tab + a status bar warning when disk is <10% free: disk, service (builds, cache, DB), per user — sessions/archive/workspace/images | |
+| ⬜ 3.6 | **Session retention** | auto-archive chats older than N days, delete archive older than M; off by default | N and M |
+| ⬜ 3.7 | **Swappable harnesses** | one adapter per harness (Codex, OpenCode, Hermes, PicoClaw, coddy), chosen per chat and switchable on the fly. See [harness-protocol.md](../reference/harness-protocol.md) | what is "coddy"? |
+| ⬜ 3.8 | **Mobility** | `paddock export <user>` / `import` of volumes, one command to bring everything up on a new host | |
+| ⬜ 3.9 | **Network isolation between users** | a separate network per user; agents talk to each other only through the web UI (a "mailbox") | |
+| ⬜ 3.10 | **Public access** | Traefik at the office entry point, domain + HTTPS | Cloudflare token, router access |
+| ✅ 3.11 | 2FA (TOTP: Authy etc.) on login | better-auth plugin, QR in settings, backup codes, trusted browser for 30 days; `tests/two-factor.mjs`. Passkey — later | |
+| ⬜ 3.12 | Rotation of `~/.codex` (sqlite logs, cache) | together with 3.6 | |
+| ⬜ 3.13 | **Keys out of the model's context** | a NeuralDeep model pulled the key out of config.toml by itself and put it into a shell command — it ended up in the session log. Keep the key in a file the agent cannot read, or hand it out through the web UI | how to hide it |
 
-## 4. Позиционирование: herdr, Orca и чего у нас нет (2026-10-29)
+## 4. Positioning: herdr, Orca and what we lack (2026-10-29)
 
-- **herdr** — терминальный мультиплексор для агентов (tmux под агентов, Rust): PTY на агента, статусы working/blocked/idle, детач/реаттач по SSH, сокет-API, чтобы агенты дёргали друг друга. Один пользователь, терминал, Apache-2.0 (до 2026-07-22 — AGPL).
-- **bb** (get-bb/bb) — ближе всех по архитектуре: Node-сервер с веб-интерфейсом внутри десктоп-приложения, харнессы через ACP. Но крутится на своей машине, удалённо — туннель/Tailscale, контейнеров и прокси нет. Полный разбор со ссылками — [landscape.md](../reference/landscape.md). Общее с нами — «несколько чатов рядом»; у них в терминале панелями, у нас в браузере и на сервере.
-- **Orca** — десктоп про управление флотом: worktree (в т. ч. по SSH) на задачу, Runs / Tasks / Dispatches, decision gates, DAG, design mode. Главное — оркестрация, а не отображение.
-- **Наше настоящее отличие** — мультиюзер и изоляция как продукт: контейнер на человека, общий прокси, LAN и хост закрыты; вся работа с телефона без клиентов. Ни herdr, ни Orca не рассчитаны на несколько человек в одном инстансе.
+- **herdr** — a terminal multiplexer for agents (tmux for agents, Rust): a PTY per agent, working/blocked/idle statuses, detach/reattach over SSH, a socket API so agents can poke each other. Single user, terminal, Apache-2.0 (AGPL until 2026-07-22).
+- **bb** (get-bb/bb) — the closest in architecture: a Node server with a web interface inside a desktop app, harnesses via ACP. But it runs on your own machine; remote access means a tunnel/Tailscale, no containers or proxy. Full breakdown with links: [landscape.md](../reference/landscape.md). What we share is "several chats side by side"; theirs are terminal panes, ours are in the browser and on a server.
+- **Orca** — a desktop app for fleet management: a worktree (including over SSH) per task, Runs / Tasks / Dispatches, decision gates, DAG, design mode. The focus is orchestration, not display.
+- **Our real difference** — multi-user and isolation as the product: a container per person, a shared proxy, LAN and host closed; everything works from a phone without clients. Neither herdr nor Orca is designed for several people on one instance.
 
-Чего нет, в план (после 3.x, порядок обсуждаем):
+What we lack, to be planned (after 3.x, order to be discussed):
 
-| # | задача | откуда | детали |
+| # | task | from | details |
 |---|---|---|---|
-| ⬜ 4.1 | **Статусы агентов в сайдбаре** | herdr | blocked (ждёт разрешения) / working / done у каждого чата, видно без открытия; пуш на телефон, когда агент ждёт |
-| ⬜ 4.2 | **Агенты дёргают друг друга** | herdr (сокет-API) | через морду, не напрямую (см. 3.9 — «почтовый ящик»): агент A ставит задачу агенту B, ответ возвращается в его чат |
-| ⬜ 4.3 | **Очереди и диспатчи** | Orca (Runs / Tasks / Dispatches) | очередь задач на пользователя, раздача по свободным чатам/харнессам, история прогонов |
-| ⬜ 4.4 | **Worktree на задачу** | Orca | чат в отдельном git worktree внутри `workspace-<user>`, слияние из морды |
-| ⬜ 4.5 | **Гейты решений** | Orca (decision gates) | шаг плана ждёт «да» человека (из морды или телеграма), а не только разрешения shell |
-| ⬜ 4.6 | **Смена харнессов** | — | это 3.7; без неё «мультихарнесс» только в README |
-| ⬜ 4.7 | **Мобильная вёрстка, складной телефон** | herdr (работа с телефона); Xiaomi 18 Fold | закрытый — одно окно + свайп между чатами; раскрытый — 2 окна рядом; панель и статус-бар компактные |
+| ⬜ 4.1 | **Agent statuses in the sidebar** | herdr | blocked (waiting for approval) / working / done for each chat, visible without opening it; a push to the phone when an agent is waiting |
+| ⬜ 4.2 | **Agents poke each other** | herdr (socket API) | through the web UI, not directly (see 3.9 — "mailbox"): agent A gives a task to agent B, the answer comes back to A's chat |
+| ⬜ 4.3 | **Queues and dispatches** | Orca (Runs / Tasks / Dispatches) | a task queue per user, dispatched to free chats/harnesses, run history |
+| ⬜ 4.4 | **A worktree per task** | Orca | a chat in a separate git worktree inside `workspace-<user>`, merging from the web UI |
+| ⬜ 4.5 | **Decision gates** | Orca (decision gates) | a plan step waits for a human "yes" (from the web UI or Telegram), not just for a shell approval |
+| ⬜ 4.6 | **Switching harnesses** | — | this is 3.7; without it "multi-harness" exists only in the README |
+| ⬜ 4.7 | **Mobile layout, foldable phone** | herdr (working from a phone); Xiaomi 18 Fold | folded — one pane + swipe between chats; unfolded — 2 panes side by side; compact panel and status bar |
 
-## 5. Из обсуждения запуска (2026-10-29, Telegram) и следом
+## 5. From the launch discussion (2026-10-29, Telegram) and after
 
-Идея в одну строку: своя веб-морда, под капотом любой харнесс; инфра (прокси, подписка, 2FA, домен) — внутри решения, ставится на любой VPS в РФ одним `docker compose`.
+The idea in one line: your own web UI, any harness under the hood; the infra (proxy, subscription, 2FA, domain) is part of the solution and installs on any VPS in Russia with a single `docker compose`.
 
-| # | задача | детали | статус |
+| # | task | details | status |
 |---|---|---|---|
-| ⬜ 5.1 | **Плагины, которые пишут сами пользователи** | сейчас реестр `web/tools/` только встроенный. Формат плагина: `tool.json` + CLI + `SKILL.md` (уже есть) + по желанию вкладка правой панели (страница в sandbox-iframe) и серверный обработчик. Установка из git-URL или папки workspace в «Настройки → Инструменты», версия, обновление, удаление. Гайд `docs/plugins.md` + пример плагина в отдельном репо | вопрос Refat «свои плагины пилить» |
-| ⬜ 5.2 | **ACP как основной протокол харнессов** | Agent Client Protocol (Zed): одним адаптером покрывает Gemini CLI, Claude Code (через адаптер), Codex (codex-acp), OpenCode и др. «Тупо обёртка над ACP/CLI»: Codex app-server остаётся первым адаптером, ACP — второй и универсальный. См. 3.7 | |
-| ⬜ 5.3 | **Харнесс-контейнеры цепляются к любому интерфейсу** | контейнер харнесса — самостоятельная заготовка: изоляция, прокси, подписка, ACP/WS-вход с токеном. К нему подключается не только Paddock, но и Zed, другой веб, CLI-клиент. Документированный контракт контейнера (порты, токен, тома, env) + пример подключения из Zed | |
-| ⬜ 5.4 | **Неприкосновенная база + откат** | харнесс админа может менять морду как угодно, но есть ядро, которое нельзя сломать: вход и 2FA, проверка сессии и Origin на WS, изоляция сети, egress. После самовыкатки супервизор гоняет проверки ядра (smoke e2e) и откатывает сборку, если хоть одна упала. Сейчас откат только если сборка не поднялась | частично |
-| ✅ 5.5 | **Имена в compose** | проект `codex-hub` → `paddock`, сервисы `codex-<user>` → `harness-<user>`, тома `harness-home-<user>`, образ `paddock-harness-codex`, исходники морды у админа — `/workspace/paddock-web`. На сервере старые тома копируются в новые и остаются бэкапом | сервер переведён 2026-10-29, старые тома `codex-hub_*` — бэкап |
-| ⬜ 5.6 | **Мультиюзер = масштабирование контейнеров** | одна морда (web) на всех + по контейнеру харнесса на пользователя (+ инфра: egress, edge). README: раздел «Multi-user» — сколько ресурсов на пользователя, как добавить, лимиты CPU/RAM, где упрётся | |
-| ⬜ 5.8 | **Флот: харнессы на многих VPS, центр с постоянным адресом** | центральный сервер (морда, вход/2FA, реестр, роутинг) — единственный с постоянным доменом и IP. Узлы-раннеры на любых VPS (в т. ч. без белого IP) сами подключаются к центру исходящим туннелем по токену регистрации; на узле — харнесс-контейнеры и свой egress. Центр выбирает узел для пользователя: пул/подмножество по меткам (регион, GPU, «только РФ», клиент), здоровье, загрузка; дренаж и перенос пользователя между узлами (экспорт/импорт томов, 3.8). Подробно — architecture.md, раздел «Флот» | |
-| ⬜ 5.7 | **Харнесс по умолчанию из конфига** | новый пользователь на NeuralDeep без ChatGPT: морда сейчас выбирает модель по `model/list`, а не по `model_provider` из config.toml — у тестового пользователя по умолчанию оказывается gpt без доступа | баг |
+| ⬜ 5.1 | **User-written plugins** | today the `web/tools/` registry is built-in only. Plugin format: `tool.json` + CLI + `SKILL.md` (already there) + optionally a right-panel tab (a page in a sandboxed iframe) and a server handler. Install from a git URL or a workspace folder in "Settings → Tools", version, update, removal. A `docs/plugins.md` guide + an example plugin in a separate repo | Refat's question about "building our own plugins" |
+| ⬜ 5.2 | **ACP as the main harness protocol** | Agent Client Protocol (Zed): one adapter covers Gemini CLI, Claude Code (via an adapter), Codex (codex-acp), OpenCode and others. "Just a wrapper over ACP/CLI": Codex app-server stays the first adapter, ACP is the second, universal one. See 3.7 | |
+| ⬜ 5.3 | **Harness containers attach to any interface** | a harness container is a self-contained building block: isolation, proxy, subscription, ACP/WS entry with a token. Not only Paddock can connect to it, but also Zed, another web UI, a CLI client. A documented container contract (ports, token, volumes, env) + an example of connecting from Zed | |
+| ⬜ 5.4 | **Untouchable core + rollback** | the admin's harness may change the web UI however it likes, but there is a core that must not break: login and 2FA, session and Origin checks on WS, network isolation, egress. After a self-deploy the supervisor runs core checks (smoke e2e) and rolls back the build if any fails. Today it rolls back only if the build did not start | partially |
+| ✅ 5.5 | **Names in compose** | project `codex-hub` → `paddock`, services `codex-<user>` → `harness-<user>`, volumes `harness-home-<user>`, image `paddock-harness-codex`, the admin's UI sources at `/workspace/paddock-web`. On the server the old volumes are copied into the new ones and kept as a backup | server migrated 2026-10-29, old `codex-hub_*` volumes kept as a backup |
+| ⬜ 5.6 | **Multi-user = scaling containers** | one web UI for everyone + one harness container per user (+ infra: egress, edge). README: a "Multi-user" section — resources per user, how to add one, CPU/RAM limits, where it hits the ceiling | |
+| ⬜ 5.8 | **Fleet: harnesses on many VPSes, a hub with a permanent address** | the central server (web UI, login/2FA, registry, routing) is the only one with a permanent domain and IP. Runner nodes on any VPS (including ones without a public IP) connect to the hub themselves via an outbound tunnel with a registration token; a node hosts harness containers and its own egress. The hub picks a node for each user: a pool/subset by labels (region, GPU, "Russia only", client), health, load; draining and moving a user between nodes (volume export/import, 3.8). Details in architecture.md, section "Fleet" | |
+| ⬜ 5.7 | **Default harness from config** | a new user on NeuralDeep without ChatGPT: the web UI currently picks the model from `model/list` rather than from `model_provider` in config.toml — the test user ends up with a gpt model by default that they have no access to | bug |
 
 
-## 6. Отложено / вне этого репо
+## 6. Deferred / outside this repo
 
-- PicoClaw как ещё один харнесс → войдёт в 3.7.
-- Перенос памяти всех Claude Code в OntoShip-базу для Codex (267 файлов, чистка секретов) — отдельная задача в valerii-life.
-- Горячая клавиша quote-reply для Codex CLI — отдельный мод.
+- PicoClaw as another harness → part of 3.7.
+- Moving all Claude Code memory into an OntoShip knowledge base for Codex (267 files, secret cleanup) — a separate task in the operator's notes.
+- A quote-reply hotkey for Codex CLI — a separate mod.
 
-## Как фиксируем прогресс
+## How we track progress
 
-Каждый пункт: код + e2e-проверка в `tests/` + строка здесь меняет статус. Секреты в репо не попадают: всё в `secrets/` (в `.gitignore`), в документах — только «где лежит».
+Each item: code + an e2e check in `tests/` + its line here changes status. Secrets never get into the repo: everything is in `secrets/` (in `.gitignore`); docs only say where a secret lives.

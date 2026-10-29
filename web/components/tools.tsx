@@ -9,7 +9,7 @@ type Request = (method: string, params: unknown) => Promise<any>;
 
 const field = "w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)]/50";
 const primary = "rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-3 py-1.5 text-sm font-medium text-black disabled:opacity-40";
-const scopeLabel: Record<string, string> = { user: "свой", repo: "проект", system: "системный", admin: "админ" };
+const scopeLabel: Record<string, string> = { user: "personal", repo: "project", system: "system", admin: "admin" };
 
 export function ToolsTab({ request }: { request: Request }) {
   const [tools, setTools] = useState<Tool[] | null>(null);
@@ -27,30 +27,30 @@ export function ToolsTab({ request }: { request: Request }) {
   return (
     <div className="space-y-6">
       <p className="text-sm text-[var(--muted)]">
-        {t("Инструмент Paddock — это команда и скилл, который объясняет агенту, когда её звать. Shell есть у любого харнесса и любой модели, поэтому инструменты не зависят ни от Codex, ни от провайдера.")}
+        {t("A Paddock tool is a command plus a skill that tells the agent when to call it. Every harness and every model has a shell, so tools don't depend on Codex or on the provider.")}
       </p>
       {error && <p className="text-sm text-[var(--red)]">{error}</p>}
 
       <section className="space-y-2">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Инструменты Paddock")}</h3>
-        {!tools && !error && <p className="text-sm text-[var(--faint)]">{t("читаю реестр…")}</p>}
+        <h3 className="text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Paddock tools")}</h3>
+        {!tools && !error && <p className="text-sm text-[var(--faint)]">{t("reading registry…")}</p>}
         {tools?.map((t) => <ToolCard key={t.id} tool={t} request={request} onChange={() => reloadSkills(true)} />)}
       </section>
 
       <section className="space-y-2">
         <div className="flex items-center gap-2">
-          <h3 className="flex-1 text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Скиллы в харнессе")}</h3>
-          <button onClick={() => reloadSkills(true)} className="rounded-md p-1 text-[var(--muted)] hover:bg-[var(--panel-2)]" title={t("Перечитать с диска")}>
+          <h3 className="flex-1 text-xs font-medium uppercase tracking-wide text-[var(--faint)]">{t("Skills in the harness")}</h3>
+          <button onClick={() => reloadSkills(true)} className="rounded-md p-1 text-[var(--muted)] hover:bg-[var(--panel-2)]" title={t("Reload from disk")}>
             <Icon name="refresh" size={13} />
           </button>
         </div>
-        {!skills && !error && <p className="text-sm text-[var(--faint)]">{t("читаю скиллы…")}</p>}
-        {skills && skills.length === 0 && <p className="text-sm text-[var(--faint)]">{t("скиллов нет")}</p>}
+        {!skills && !error && <p className="text-sm text-[var(--faint)]">{t("reading skills…")}</p>}
+        {skills && skills.length === 0 && <p className="text-sm text-[var(--faint)]">{t("no skills")}</p>}
         {skills && groupSkills(skills, paddockSkills).map((g) => (
           <SkillGroup key={g.title} title={g.title} skills={g.skills} open={g.open}
             toggle={(list, on) => Promise.all(list.map((x) => setSkillEnabled(request, x, on))).then(() => reloadSkills(true)).catch((err) => setError(err.message))} />
         ))}
-        <p className="text-xs text-[var(--faint)]">{t("Скиллы проекта (папка")} <span className="font-mono">.codex/skills</span> {t("в репо) видны в окне чата этого проекта, значок под полем ввода.")}</p>
+        <p className="text-xs text-[var(--faint)]">{t("Project skills (the")} <span className="font-mono">.codex/skills</span> {t("folder in the repo) show up in that project's chat pane, via the badge under the input.")}</p>
       </section>
     </div>
   );
@@ -65,7 +65,7 @@ function groupSkills(skills: Skill[], paddock: Set<string>) {
     else if (s.name.includes(":")) add(s.name.split(":")[0], s);
     else add(scopeLabel[s.scope] ? `${scopeLabel[s.scope][0].toUpperCase()}${scopeLabel[s.scope].slice(1)}` : s.scope, s);
   }
-  const order = (t: string) => (t === "Paddock" ? 0 : t === "Свой" ? 1 : t === "Проект" ? 2 : t === "Системный" ? 9 : 5);
+  const order = (t: string) => (t === "Paddock" ? 0 : t === "Personal" ? 1 : t === "Project" ? 2 : t === "System" ? 9 : 5);
   return [...groups.entries()]
     .map(([title, list]) => ({ title, skills: list, open: order(title) < 5 }))
     .sort((a, b) => order(a.title) - order(b.title) || a.title.localeCompare(b.title));
@@ -80,7 +80,7 @@ function SkillGroup({ title, skills, open, toggle }: { title: string; skills: Sk
         <span className="flex-1 font-medium">{t(title)}</span>
         <span className="font-mono text-[11px] text-[var(--faint)]">{on}/{skills.length}</span>
         <input type="checkbox" checked={on === skills.length} ref={(el) => { if (el) el.indeterminate = on > 0 && on < skills.length; }}
-          onClick={(e) => e.stopPropagation()} onChange={(e) => toggle(skills, e.target.checked)} title={t("Включить / выключить всю группу")} className="h-4 w-4 accent-[var(--accent)]" />
+          onClick={(e) => e.stopPropagation()} onChange={(e) => toggle(skills, e.target.checked)} title={t("Enable / disable the whole group")} className="h-4 w-4 accent-[var(--accent)]" />
       </summary>
       <div className="divide-y divide-[var(--border)]">
         {skills.map((s) => (
@@ -124,15 +124,15 @@ function ToolCard({ tool, request, onChange }: { tool: Tool; request: Request; o
     setStatus(null);
     try {
       if (enabled) {
-        if (needKey) throw new Error(t("сначала подключи ключ во вкладке NeuralDeep"));
+        if (needKey) throw new Error(t("connect a key in the NeuralDeep tab first"));
         await installTool(request, tool, settings);
         if (tool.id === "images") await cleanupLegacyImages(request);
       } else await removeTool(request, tool);
       setSt({ installed: enabled, outdated: false, settings });
-      setStatus({ ok: true, text: enabled ? t("Готово, действует для новых ходов") : t("Выключено") });
+      setStatus({ ok: true, text: enabled ? t("Done, applies to new turns") : t("Disabled") });
       onChange();
     } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : t("не получилось") });
+      setStatus({ ok: false, text: e instanceof Error ? e.message : t("failed") });
     }
     setBusy(false);
   };
@@ -147,26 +147,26 @@ function ToolCard({ tool, request, onChange }: { tool: Tool; request: Request; o
           <span className="block text-xs text-[var(--muted)]">{localized(tool.description)}</span>
         </span>
         <span className={`text-xs ${st.installed ? (st.outdated ? "text-[var(--yellow)]" : "text-[var(--green)]") : "text-[var(--faint)]"}`}>
-          {st.installed ? (st.outdated ? t("есть обновление") : t("установлен")) : t("выключен")}
+          {st.installed ? (st.outdated ? t("update available") : t("installed")) : t("off")}
         </span>
       </label>
-      {needKey && <p className="text-xs text-[var(--red)]">{t("ключ NeuralDeep не подключён — вкладка NeuralDeep")}</p>}
+      {needKey && <p className="text-xs text-[var(--red)]">{t("NeuralDeep key not connected — see the NeuralDeep tab")}</p>}
       {tool.id === "images" && (
         <div className={`grid gap-3 sm:grid-cols-2 ${enabled ? "" : "pointer-events-none opacity-40"}`}>
           <label className="space-y-1.5">
-            <span className="text-xs text-[var(--muted)]">{t("Пропорции по умолчанию")}</span>
+            <span className="text-xs text-[var(--muted)]">{t("Default aspect ratio")}</span>
             <select value={settings.aspect ?? "1:1"} onChange={(e) => set({ aspect: e.target.value })} className={field}>
               {["1:1", "4:3", "3:4", "16:9", "9:16"].map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-3 self-end pb-2 text-sm">
             <input type="checkbox" checked={settings.allowEdit === true} onChange={(e) => set({ allowEdit: e.target.checked })} className="h-4 w-4 accent-[var(--accent)]" />
-            {t("Разрешить правку картинок")}
+            {t("Allow image editing")}
           </label>
         </div>
       )}
       <div className="flex items-center gap-3">
-        <button onClick={apply} disabled={!dirty || busy} className={primary}>{busy ? "…" : st.outdated && enabled === st.installed ? t("Обновить") : t("Применить")}</button>
+        <button onClick={apply} disabled={!dirty || busy} className={primary}>{busy ? "…" : st.outdated && enabled === st.installed ? t("Update") : t("Apply")}</button>
         {status && <span className={`text-sm ${status.ok ? "text-[var(--green)]" : "text-[var(--red)]"}`}>{status.text}</span>}
         <span className="flex-1" />
         {st.installed && <span className="truncate font-mono text-[11px] text-[var(--faint)]" title={toolBin(tool)}>{toolBin(tool).replace(/^\/home\/codex/, "~")}</span>}
@@ -210,13 +210,13 @@ export function SessionTools({ request, cwd, commands }: { request: Request; cwd
   if (!skills) return null;
   return (
     <span className="relative">
-      <button onClick={() => setOpen((o) => !o)} className="rounded px-1 hover:bg-[var(--panel-2)] hover:text-[var(--fg)]" title={t("Скиллы и инструменты этого чата")}>
+      <button onClick={() => setOpen((o) => !o)} className="rounded px-1 hover:bg-[var(--panel-2)] hover:text-[var(--fg)]" title={t("Skills and tools in this chat")}>
         <span className="text-[var(--yellow)]">⚡</span> {skills.length} skills · {tools.length} cli{used.size > 0 && <span className="text-[var(--green)]"> · {used.size} used</span>}
       </button>
       {open && (
         <div className="absolute bottom-full left-0 z-30 mb-2 max-h-80 w-80 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--panel)] p-2 text-[12px] shadow-2xl shadow-black/60" onMouseLeave={() => setOpen(false)}>
           <div className="px-1 pb-1 text-[11px] uppercase tracking-wide text-[var(--faint)]">CLI Paddock</div>
-          {tools.length === 0 && <div className="px-1 pb-1 text-[var(--faint)]">{t("нет — включаются в Настройки → Инструменты")}</div>}
+          {tools.length === 0 && <div className="px-1 pb-1 text-[var(--faint)]">{t("none — enable them in Settings → Tools")}</div>}
           {tools.map((t) => (
             <div key={t.id} className="flex items-center gap-2 px-1 py-0.5">
               <span className={used.has(`t:${t.id}`) ? "text-[var(--green)]" : "text-[var(--faint)]"}>{used.has(`t:${t.id}`) ? "●" : "○"}</span>
@@ -224,7 +224,7 @@ export function SessionTools({ request, cwd, commands }: { request: Request; cwd
               <span className="text-[var(--faint)]">{localized(t.name)}</span>
             </div>
           ))}
-          <div className="px-1 pb-1 pt-2 text-[11px] uppercase tracking-wide text-[var(--faint)]">{t("Скиллы")}</div>
+          <div className="px-1 pb-1 pt-2 text-[11px] uppercase tracking-wide text-[var(--faint)]">{t("Skills")}</div>
           {skills.map((s) => (
             <div key={s.path} className="flex items-center gap-2 px-1 py-0.5" title={s.description}>
               <span className={used.has(`s:${s.name}`) ? "text-[var(--green)]" : "text-[var(--faint)]"}>{used.has(`s:${s.name}`) ? "●" : "○"}</span>
@@ -232,7 +232,7 @@ export function SessionTools({ request, cwd, commands }: { request: Request; cwd
               <span className="text-[var(--faint)]">{t(scopeLabel[s.scope] ?? s.scope)}</span>
             </div>
           ))}
-          <div className="px-1 pt-2 text-[11px] text-[var(--faint)]">{t("● — использован в этом чате")}</div>
+          <div className="px-1 pt-2 text-[11px] text-[var(--faint)]">{t("● — used in this chat")}</div>
         </div>
       )}
     </span>

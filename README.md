@@ -1,3 +1,5 @@
+**English** · [Русский](README.ru.md) · [中文](README.zh.md)
+
 # Paddock
 
 **A self-hosted web cockpit for AI coding agents. Every user gets their own isolated container with an agent harness; one browser UI shows up to four chats side by side, like tabs in iTerm.**

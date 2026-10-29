@@ -1,1 +1,1 @@
-См. [AGENTS.md](AGENTS.md).
+See [AGENTS.md](AGENTS.md).

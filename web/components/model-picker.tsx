@@ -42,7 +42,7 @@ export function ModelPicker({ models, value, onChange }: { models: Model[]; valu
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[15px] font-medium hover:bg-[var(--panel)]"
       >
-        {current?.displayName ?? value?.model ?? t("Модель")}
+        {current?.displayName ?? value?.model ?? t("Model")}
         {value?.provider === "neuraldeep" && <span className="rounded-md bg-[var(--teal)]/15 px-1.5 py-0.5 font-mono text-[11px] text-[var(--teal)]">nd</span>}
         {value?.effort && <span className="rounded-md bg-[var(--panel-2)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--accent)]">{value.effort}</span>}
         <Icon name="chevron" size={15} className={`text-[var(--muted)] transition-transform ${open ? "rotate-180" : ""}`} />
@@ -78,7 +78,7 @@ export function ModelPicker({ models, value, onChange }: { models: Model[]; valu
           </div>
           {current && current.supportedReasoningEfforts.length > 0 && (
             <div className="border-t border-[var(--border)] p-2.5">
-              <div className="mb-1.5 px-0.5 text-[11px] uppercase tracking-wider text-[var(--faint)]">{t("Усилие рассуждения")}</div>
+              <div className="mb-1.5 px-0.5 text-[11px] uppercase tracking-wider text-[var(--faint)]">{t("Reasoning effort")}</div>
               <div className="flex flex-wrap gap-1">
                 {current.supportedReasoningEfforts.map((e) => (
                   <button
