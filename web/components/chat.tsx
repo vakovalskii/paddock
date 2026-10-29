@@ -169,7 +169,11 @@ function Workspace({ email }: { email: string }) {
         const sel = store.get<Selection | null>("paddock.selection", null);
         const def = ms.find((m) => m.isDefault) ?? ms[0];
         const ok = sel && (sel.provider ? true : ms.some((m) => m.model === sel.model));
-        setDefaultSel(ok ? sel : def ? { model: def.model, effort: def.defaultReasoningEffort } : null);
+        // Без своего выбора — то, что задано в config.toml харнесса: у пользователя только с NeuralDeep там
+        // model_provider = "neuraldeep", а model/list всё равно советует модель OpenAI, к которой у него нет доступа.
+        const cfg = ok ? null : await c.request("config/read", {}).then((r) => r.config).catch(() => null);
+        const own = cfg?.model && cfg?.model_provider && cfg.model_provider !== "openai" ? { model: cfg.model as string, effort: "", provider: cfg.model_provider as string } : null;
+        setDefaultSel(ok ? sel : own ?? (def ? { model: def.model, effort: def.defaultReasoningEffort } : null));
         if (!first) for (const h of handles) h.current?.reconnected();
         first = false;
       } catch {
