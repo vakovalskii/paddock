@@ -60,6 +60,15 @@ export async function installTool(request: Request, t: Tool, settings: Record<st
   await request("skills/list", { forceReload: true }).catch(() => {});
 }
 
+// Installed tools follow the registry: after a Paddock update the harness gets the new command and skill on the
+// next connect, with the user's settings kept. Tools the user has not installed are left alone.
+export async function refreshTools(request: Request) {
+  for (const t of await loadRegistry()) {
+    const st = await toolState(request, t);
+    if (st.installed && st.outdated) await installTool(request, t, st.settings);
+  }
+}
+
 // Удаляем только скилл: без него агент про команду не знает, а настройки сохранятся до следующего включения.
 export async function removeTool(request: Request, t: Tool) {
   await request("fs/remove", { path: skillDir(t), recursive: true, force: true }).catch(() => {});

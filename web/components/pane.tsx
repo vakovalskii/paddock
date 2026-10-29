@@ -231,7 +231,9 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
         finished.current.add(p.turn.id);
         setTurnId((t) => (t === p.turn.id ? null : t));
         setMessages((ms) => ms.map((m) => (m.id === `a-${p.turn.id}` ? { ...m, running: false } : m)));
-        patchMeta(p.turn.id, { durationMs: p.turn.durationMs });
+        // Live turns: measured in the browser from the same point as TTFT, otherwise TTFT can exceed the total
+        // (the server's duration skips the network). Turns seen only in history keep the server's number.
+        patchMeta(p.turn.id, { durationMs: meta.current[p.turn.id]?.startedAt ? Date.now() - meta.current[p.turn.id].startedAt! : p.turn.durationMs });
         if (p.turn.error) updatePart(p.turn.id, `err-${p.turn.id}`, () => ({ type: "text", itemId: `err-${p.turn.id}`, text: `⚠️ ${p.turn.error.message ?? t("turn failed")}` }));
         onThreadsChanged();
         break;

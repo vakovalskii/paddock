@@ -7,6 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { CodexClient, type ServerRequest } from "@/lib/codex-client";
 import { t } from "@/lib/i18n";
 import { store } from "@/lib/store";
+import { refreshTools } from "@/lib/tools";
 import type { AccountInfo, Snapshot } from "./account";
 import { SidePanel, type SideTab, type SnapshotData } from "./side-panel";
 import { Icon } from "./icons";
@@ -176,6 +177,7 @@ function Workspace({ email }: { email: string }) {
         await c.connect();
         setConnected(true);
         const [list] = await Promise.all([c.request("model/list", {}), loadAccount(), loadThreads(), loadNeuralDeep().catch(() => 0)]);
+        void refreshTools((m, p) => c.request(m, p)).catch(() => {});
         const ms: Model[] = list.data.filter((m: any) => !m.hidden);
         setModels(ms);
         const sel = store.get<Selection | null>("paddock.selection", null);

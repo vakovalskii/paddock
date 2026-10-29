@@ -13,7 +13,7 @@ node {{BIN}} read <id> [--last 6]                   # what that chat said recent
 node {{BIN}} send <id> "message" [--wait]           # message it; --wait prints its final answer
 ```
 
-- `<id>` is the 8-character prefix from `list`.
+- `<id>` is the 8-character id from `list`. Chats often share a title; the `last:` line shows what each one is doing.
 - A busy chat gets your message added to its running turn; an idle one starts a new turn. The user sees it in that pane.
 - Use `--wait` when you need the answer to continue (it waits up to 10 minutes). Without it, the other agent may answer later with its own `send`.
 - Say what you need and the context it lacks (paths, branch, what you already did): it cannot see your chat.

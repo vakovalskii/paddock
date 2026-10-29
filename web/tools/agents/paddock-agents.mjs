@@ -7,7 +7,8 @@
 //   node paddock-agents.mjs read <id> [--last 6]
 //   node paddock-agents.mjs send <id> "message" [--wait] [--timeout 600]
 //
-// <id> is a thread id or its first characters (as printed by list). A message to a busy chat is added to its
+// <id> is a full thread id or the 8-character id printed by list (the random tail of the id: thread ids are
+// UUIDv7, so their heads repeat for chats created within the same minute). A message to a busy chat is added to its
 // running turn (turn/steer), otherwise it starts a new turn. --wait prints the target's final answer.
 // Every message carries a hop counter; after MAX_HOPS agent-to-agent messages in a row sending is refused.
 import { readFileSync } from "node:fs";
@@ -49,7 +50,7 @@ ws.onmessage = (e) => {
 ws.onerror = () => die(`cannot reach the harness app-server at ${URL_}`);
 
 const text = (item) => (item.content ?? []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
-const short = (id) => id.slice(0, 8);
+const short = (id) => id.replace(/-/g, "").slice(-8);
 const oneLine = (s, n = 70) => (s ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 const statusOf = (t) => (t.status?.type === "active" ? (t.status.activeFlags?.length ? `active (${t.status.activeFlags.join(", ")})` : "active") : t.status?.type ?? "?");
 
@@ -61,7 +62,7 @@ async function loaded() {
 
 async function resolve(prefix) {
   const all = await loaded();
-  const hits = all.filter((t) => t.id === prefix || t.id.startsWith(prefix));
+  const hits = all.filter((t) => t.id === prefix || short(t.id) === prefix || t.id.startsWith(prefix));
   if (hits.length === 1) return hits[0];
   if (hits.length > 1) die(`"${prefix}" matches several chats, use more characters`);
   // Not open anywhere: try the full id directly (resume loads it).
@@ -83,12 +84,23 @@ async function myHop() {
   return m ? Number(m[3]) : 0;
 }
 
+// The last thing said in a chat: titles repeat ("hi", "hi", "hi"), the last exchange tells chats apart.
+async function lastLine(id) {
+  const [turn] = await lastTurns(id, 1).catch(() => []);
+  const items = (turn?.items ?? []).filter((i) => (i.type === "agentMessage" && i.text) || i.type === "userMessage");
+  const last = items.pop();
+  if (!last) return "";
+  return last.type === "userMessage" ? `> ${oneLine(text(last), 60)}` : oneLine(last.text, 60);
+}
+
 async function list() {
   const all = await loaded();
   if (!all.length) return console.log("no open chats");
-  for (const t of all.sort((a, b) => b.updatedAt - a.updatedAt)) {
+  const rows = await Promise.all(all.sort((a, b) => b.updatedAt - a.updatedAt).map(async (t) => [t, await lastLine(t.id)]));
+  for (const [t, last] of rows) {
     const who = t.id === SELF ? "  ← you" : t.parentThreadId ? `  (sub-agent of ${short(t.parentThreadId)})` : "";
-    console.log(`${short(t.id)}  ${statusOf(t).padEnd(8)}  ${oneLine(t.name ?? t.preview, 50).padEnd(50)}  ${t.cwd}${who}`);
+    console.log(`${short(t.id)}  ${statusOf(t).padEnd(8)}  ${oneLine(t.name ?? t.preview, 40).padEnd(40)}  ${t.cwd}${who}`);
+    if (last) console.log(`          last: ${last}`);
   }
 }
 
