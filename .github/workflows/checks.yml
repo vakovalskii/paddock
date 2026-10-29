@@ -1,0 +1,41 @@
+# Checks on every PR and push to main: types, a production build, the English UI is complete, test scripts parse.
+# End-to-end tests run against a live instance with a test account (tests/README.md), not here.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: typecheck
+        run: npx tsc --noEmit -p .
+      - name: i18n — every Russian key has an English translation
+        run: node scripts/check-i18n.mjs
+      - name: build
+        run: npx next build
+        env:
+          AUTH_DB: /tmp/paddock-ci-auth.db
+          BETTER_AUTH_SECRET: ci-only-secret-not-used-anywhere-else
+      - name: test scripts parse
+        working-directory: tests
+        run: for f in *.mjs; do node --check "$f"; done
+      - name: tools have a manifest, a command and a skill
+        run: |
+          for d in tools/*/; do
+            test -f "$d/tool.json" && test -f "$d/SKILL.md" || { echo "missing tool.json or SKILL.md in $d"; exit 1; }
+            bin=$(node -e "console.log(require('./$d/tool.json').bin)") && node --check "$d/$bin"
+          done
