@@ -13,6 +13,7 @@ import {
 import type { ServerRequest } from "@/lib/codex-client";
 import { actionsOf, changedFiles, itemToPart, toThreadMessage, turnsToMessages, userParts, userText, type Action, type ChangedFile, type Msg, type Part, type TurnMeta } from "@/lib/messages";
 import { t } from "@/lib/i18n";
+import { COMMANDS, INIT_PROMPT, parse, suggest, type SlashCommand } from "@/lib/slash";
 import { store } from "@/lib/store";
 import { Icon } from "./icons";
 import { ImageReader, makeReader } from "./local-image";
@@ -149,8 +150,12 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
   }, []);
 
   const updatePart = useCallback((tId: string, itemId: string, fn: (p: Part | undefined) => Part | null) => {
-    setMessages((ms) =>
-      ms.map((m) => {
+    setMessages((ms0) => {
+      // A turn with no user message (/compact, !shell, /review) gets its answer bubble from its first item.
+      const ms = ms0.some((m) => m.id === `a-${tId}`)
+        ? ms0
+        : [...ms0.filter((m) => m.id !== "notice"), { id: `a-${tId}`, role: "assistant" as const, turnId: tId, parts: [], running: !finished.current.has(tId), meta: meta.current[tId] }];
+      return ms.map((m) => {
         if (m.id !== `a-${tId}`) return m;
         const i = m.parts.findIndex((p) => p.itemId === itemId);
         const next = fn(i >= 0 ? m.parts[i] : undefined);
@@ -159,13 +164,13 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
         if (i >= 0) parts[i] = next;
         else parts.push(next);
         return { ...m, parts };
-      }),
-    );
+      });
+    });
   }, []);
 
   // A line from Paddock itself in the chat: what went wrong, instead of a silently empty pane or a vanished message.
-  const notice = useCallback((text: string) => {
-    setMessages((ms) => [...ms.filter((m) => m.id !== "notice"), { id: "notice", role: "assistant", turnId: "", parts: [{ type: "text", itemId: "notice", text: `⚠️ ${text}` }] }]);
+  const notice = useCallback((text: string, warn = true) => {
+    setMessages((ms) => [...ms.filter((m) => m.id !== "notice"), { id: "notice", role: "assistant", turnId: "", parts: [{ type: "text", itemId: "notice", text: warn ? `⚠️ ${text}` : text }] }]);
   }, []);
 
   // Подписка на тред + история ходов. И при открытии, и после переподключения:
@@ -337,27 +342,7 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     for (let i = 0; i < 75 && !selRef.current; i++) await new Promise((r) => setTimeout(r, 200));
     const s = selRef.current;
     if (!s) throw new Error(t("models are still loading, try again in a second"));
-    const provider = s.provider ?? "openai";
-    let tid = threadIdRef.current;
-    // Провайдер у Codex задаётся на весь тред — модель другого провайдера продолжает в новом чате той же папки.
-    if (tid && threadProvider.current !== provider) {
-      newThread(ctx.cwd ?? CWD);
-      tid = null;
-    }
-    if (!tid) {
-      const nd = ndModels.find((m) => m.model === s?.model && provider === "neuraldeep");
-      const r = await api.request("thread/start", {
-        cwd: newCwd.current,
-        model: s?.model,
-        modelProvider: provider,
-        config: nd?.context ? { model_context_window: nd.context } : null,
-      });
-      tid = r.thread.id as string;
-      threadIdRef.current = tid;
-      threadProvider.current = r.modelProvider ?? provider;
-      setThreadId(tid);
-      setCtx({ cwd: r.cwd, branch: r.thread.gitInfo?.branch ?? null });
-    }
+    const tid = await ensureThread(s);
     const startedAt = Date.now();
     const res = await api.request("turn/start", {
       threadId: tid,
@@ -371,6 +356,106 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     toBottom();
     if (!finished.current.has(id)) setTurnId(id);
     onThreadsChanged();
+  };
+
+  // The chat's thread, started on first use. The provider is fixed per thread in Codex, so a model from another
+  // provider continues in a new chat in the same folder.
+  const ensureThread = async (s: Selection | null): Promise<string> => {
+    const provider = s?.provider ?? "openai";
+    let tid = threadIdRef.current;
+    if (tid && threadProvider.current !== provider) {
+      newThread(ctx.cwd ?? CWD);
+      tid = null;
+    }
+    if (tid) return tid;
+    const nd = ndModels.find((m) => m.model === s?.model && provider === "neuraldeep");
+    const r = await api.request("thread/start", {
+      cwd: newCwd.current,
+      model: s?.model,
+      modelProvider: provider,
+      config: nd?.context ? { model_context_window: nd.context } : null,
+    });
+    tid = r.thread.id as string;
+    threadIdRef.current = tid;
+    threadProvider.current = r.modelProvider ?? provider;
+    setThreadId(tid);
+    setCtx({ cwd: r.cwd, branch: r.thread.gitInfo?.branch ?? null });
+    onThreadsChanged();
+    return tid;
+  };
+
+  // "/command" and "!shell" from the composer. Returns false when the text is an ordinary message.
+  const runCommand = async (text: string): Promise<boolean> => {
+    const shell = text.match(/^!\s*([\s\S]+)$/);
+    const cmd = shell ? null : parse(text);
+    if (!shell && !cmd) return false;
+    const tid = threadIdRef.current;
+    const needThread = () => {
+      if (!tid) throw new Error(t("start the chat first"));
+      return tid;
+    };
+    try {
+      if (shell) {
+        await api.request("thread/shellCommand", { threadId: await ensureThread(selRef.current), command: shell[1] });
+        toBottom();
+        return true;
+      }
+      switch (cmd!.name) {
+        case "new":
+          newThread(ctx.cwd ?? CWD);
+          break;
+        case "compact":
+          await api.request("thread/compact/start", { threadId: needThread() });
+          break;
+        case "review": {
+          const target = cmd!.arg ? { type: "custom", instructions: cmd!.arg } : { type: "uncommittedChanges" };
+          const r = await api.request("review/start", { threadId: await ensureThread(selRef.current), target, delivery: "inline" });
+          if (r.turn?.id && !finished.current.has(r.turn.id)) setTurnId(r.turn.id);
+          break;
+        }
+        case "diff":
+          await api.request("thread/shellCommand", { threadId: await ensureThread(selRef.current), command: "git status --short && git --no-pager diff --stat && git --no-pager diff" });
+          break;
+        case "init":
+          await startTurn(INIT_PROMPT);
+          break;
+        case "rename":
+          if (!cmd!.arg) throw new Error(t("usage: /rename <name>"));
+          await api.request("thread/name/set", { threadId: needThread(), name: cmd!.arg });
+          onThreadsChanged();
+          notice(t("Renamed to “{name}”.", { name: cmd!.arg }), false);
+          break;
+        case "fork": {
+          const r = await api.request("thread/fork", { threadId: needThread() });
+          onThreadsChanged();
+          await openThread(r.thread.id);
+          notice(t("This is a copy of the chat; the original is unchanged."), false);
+          break;
+        }
+        case "goal":
+          if (!cmd!.arg) throw new Error(t("usage: /goal <objective> | clear"));
+          if (cmd!.arg === "clear") await api.request("thread/goal/clear", { threadId: needThread() });
+          else await api.request("thread/goal/set", { threadId: await ensureThread(selRef.current), objective: cmd!.arg, origin: "user" });
+          notice(cmd!.arg === "clear" ? t("Goal cleared.") : t("Goal set: {goal}", { goal: cmd!.arg }), false);
+          break;
+        case "status": {
+          const u = usage?.last ? `${Math.round(usage.last.inputTokens / 1000)}k / ${Math.round((usage.modelContextWindow ?? 0) / 1000)}k` : "—";
+          notice([
+            `**${t("Model")}:** ${shown?.model ?? "—"}${shown?.effort ? ` (${shown.effort})` : ""}${shown?.provider ? ` · ${shown.provider}` : ""}`,
+            `**${t("Folder")}:** \`${ctx.cwd ?? CWD}\`${ctx.branch ? ` · ${ctx.branch}` : ""}`,
+            `**${t("Context")}:** ${u}`,
+            `**${t("Chat")}:** ${tid ? `\`${tid}\`` : t("not started")}`,
+          ].join("  \n"), false);
+          break;
+        }
+        case "help":
+          notice(COMMANDS.map((c) => `\`/${c.name}${c.args ? ` ${c.args}` : ""}\` — ${c.description()}`).concat(`\`!command\` — ${t("run a shell command in this chat")}`).join("  \n"), false);
+          break;
+      }
+    } catch (e: any) {
+      notice(`/${cmd?.name ?? "!"}: ${e?.message ?? String(e)}`);
+    }
+    return true;
   };
 
   const textOf = (m: AppendMessage) => m.content.map((c) => (c.type === "text" ? c.text : "")).join("\n").trim();
@@ -389,7 +474,11 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     messages,
     isRunning: turnId !== null,
     convertMessage: toThreadMessage,
-    onNew: async (m) => { const tx = textOf(m); if (tx || images.length) await startTurn(tx); },
+    onNew: async (m) => {
+      const tx = textOf(m);
+      if (!images.length && /^[/!]/.test(tx) && (await runCommand(tx))) return;
+      if (tx || images.length) await startTurn(tx);
+    },
     onEdit: async (m) => { const t = textOf(m); if (t && m.sourceId) await rerun(m.sourceId, t); },
     onReload: async (parentId) => {
       const m = messages.find((x) => x.id === parentId);
@@ -472,8 +561,51 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
     setTimeout(() => paneRef.current?.querySelector<HTMLTextAreaElement>(".composer textarea")?.focus(), 0);
   };
 
+  // Command hints: typing "/" lists commands; ↑↓ pick, Tab or Enter completes, Esc hides.
+  const [draft, setDraft] = useState("");
+  const [hint, setHint] = useState(0);
+  const [hintsOff, setHintsOff] = useState(false);
+  useEffect(() => runtime.thread.composer.subscribe(() => {
+    const text = runtime.thread.composer.getState().text;
+    setDraft((d) => {
+      if (d !== text) { setHint(0); setHintsOff(false); }
+      return text;
+    });
+  }), [runtime]);
+  const hints = hintsOff ? null : suggest(draft);
+  const complete = (c: SlashCommand) => runtime.thread.composer.setText(`/${c.name}${c.args ? " " : ""}`);
+  const onComposerKey = (e: React.KeyboardEvent) => {
+    // A finished command goes straight to runCommand, also while a turn is running (the composer would not send then).
+    if (e.key === "Enter" && !e.shiftKey && !images.length && (draft.startsWith("!") ? draft.trim().length > 1 : !!parse(draft)) && !(hints && draft.slice(1) !== hints[hint]?.name)) {
+      e.preventDefault();
+      const text = draft.trim();
+      runtime.thread.composer.setText("");
+      void runCommand(text);
+      return;
+    }
+    if (!hints) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setHint((h) => (h + (e.key === "ArrowDown" ? 1 : hints.length - 1)) % hints.length);
+    } else if (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey && draft.slice(1) !== hints[hint]?.name)) {
+      e.preventDefault();
+      complete(hints[hint] ?? hints[0]);
+    } else if (e.key === "Escape") setHintsOff(true);
+  };
+
   const composer = (
-    <div className="space-y-2">
+    <div className="relative space-y-2">
+      {hints && (
+        <div className="absolute inset-x-0 bottom-full z-30 mb-1 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] py-1 shadow-xl shadow-black/40" data-slash-hints>
+          {hints.map((c, i) => (
+            <button key={c.name} onMouseDown={(e) => e.preventDefault()} onClick={() => complete(c)} onMouseEnter={() => setHint(i)}
+              className={`flex w-full items-baseline gap-3 px-3 py-1.5 text-left text-sm ${i === hint ? "bg-[var(--panel-2)]" : ""}`}>
+              <span className="shrink-0 font-mono text-[var(--accent)]">/{c.name}{c.args && <span className="text-[var(--faint)]"> {c.args}</span>}</span>
+              <span className="truncate text-[var(--muted)]">{c.description()}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {approvals.map((req) => <Approval key={req.id} req={req} onAnswer={answer} />)}
       <ComposerPrimitive.Root className="composer rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-2 transition-colors focus-within:border-[var(--accent)]/40">
         {(images.length > 0 || pastes.length > 0) && (
@@ -500,6 +632,7 @@ export const Pane = memo(function Pane({ handleRef, api, connected, models, ndMo
         )}
         <ComposerPrimitive.Input
           onPaste={onPaste}
+          onKeyDown={onComposerKey}
           autoFocus={active}
           placeholder={connected ? t("What should we do?") : t("No connection to codex…")}
           className={`${compact ? "max-h-40 min-h-9" : "max-h-60 min-h-11"} w-full resize-none bg-transparent px-2.5 py-2 leading-relaxed outline-none placeholder:text-[var(--faint)]`}

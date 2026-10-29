@@ -6,7 +6,7 @@ import { t as tr } from "./i18n";
 export type ToolKind = "shell" | "read" | "search" | "list" | "patch" | "mcp" | "web" | "tool" | "agent";
 export type WebLink = { title: string; url: string | null; domain: string | null; snippet: string | null };
 export type FileEdit = { path: string; kind: "add" | "delete" | "update"; diff: string };
-export type ToolArgs = { kind: ToolKind; title: string; durationMs: number | null; diff: boolean; verb?: string; links?: WebLink[]; files?: FileEdit[] };
+export type ToolArgs = { kind: ToolKind; title: string; durationMs: number | null; diff: boolean; verb?: string; links?: WebLink[]; files?: FileEdit[]; expand?: boolean };
 
 export type Part =
   | { type: "text"; itemId: string; text: string }
@@ -59,12 +59,42 @@ function bareCommand(cmd: string): string {
   return m ? m[2] : cmd;
 }
 
+// A message between chats (paddock-agents): the header the CLI puts on it, and the hint line under it.
+const AGENT_HEADER = /^\[paddock-agents: from ([0-9a-f-]+|unknown)(?: "([^"]*)")?, hop \d+(?:, waiting)?\]\n(?:(?:The sender is waiting|To answer, run)[^\n]*\n)?\n?/;
+export function agentMessage(text: string): { from: { id: string; title: string | null }; text: string } | null {
+  const m = text.match(AGENT_HEADER);
+  return m ? { from: { id: m[1], title: m[2] ?? null }, text: text.slice(m[0].length) } : null;
+}
+
+// paddock-agents calls read as a conversation, not as a shell command: who was asked what, and the answer.
+function agentsPart(item: any, verb: string, rest: string, extra: { result?: string; isError: boolean; argsText: string }): Part {
+  const out = item.aggregatedOutput ?? "";
+  if (verb === "send") {
+    const m = rest.match(/^(\S+)\s+(['"])([\s\S]*?)\2/) ?? rest.match(/^(\S+)\s+(\S[\s\S]*?)(?:\s+--|$)/);
+    const id = m?.[1] ?? "";
+    const text = (m?.[3] ?? m?.[2] ?? "").trim();
+    const answer = out.match(/answer from \S+ \([^)]*\):\n\n([\s\S]*)$/)?.[1]?.trim();
+    const p = tool(item, "agent", `${id}: ${text.split("\n")[0]}`, {
+      argsText: text,
+      result: item.status === "inProgress" ? undefined : extra.isError ? out : answer ?? tr("delivered"),
+      isError: extra.isError,
+    });
+    if (p.type === "tool-call") p.args = { ...p.args, verb: tr("Message to"), expand: true };
+    return p;
+  }
+  const p = tool(item, "agent", verb === "read" ? rest.split(/\s/)[0] : "", { ...extra, argsText: "" });
+  if (p.type === "tool-call") p.args = { ...p.args, verb: verb === "read" ? tr("Read chat") : tr("Open chats") };
+  return p;
+}
+
 function commandPart(item: any): Part {
   const actions: any[] = item.commandActions ?? [];
   const cmd = bareCommand(item.command ?? "");
   const exit = item.exitCode == null ? "" : `\n[exit ${item.exitCode}]`;
   const result = item.aggregatedOutput == null ? (item.exitCode == null ? undefined : exit.trim()) : item.aggregatedOutput + exit;
   const extra = { result, isError: item.exitCode != null && item.exitCode !== 0, argsText: cmd };
+  const agents = cmd.match(/paddock-agents(?:\.mjs)?\s+(list|read|send)\b\s*([\s\S]*)$/);
+  if (agents) return agentsPart(item, agents[1], agents[2], extra);
   const only = (t: string) => actions.length > 0 && actions.every((a) => a.type === t);
   if (only("read")) return tool(item, "read", actions.map((a) => a.name ?? a.path).join(", "), extra);
   if (only("search")) return tool(item, "search", actions.map((a) => [a.query, a.path && tr("in {path}", { path: a.path })].filter(Boolean).join(" ")).join(", "), extra);
@@ -133,6 +163,11 @@ export function itemToPart(item: any): Part | null {
         isError: item.status === "failed",
       });
     }
+    // /review: the request and the finished review.
+    case "enteredReviewMode":
+      return { type: "reasoning", itemId: item.id, text: tr("Reviewing: {what}", { what: item.review ?? "" }) };
+    case "exitedReviewMode":
+      return { type: "text", itemId: item.id, text: item.review ?? "" };
     case "subAgentActivity":
       return tool(item, "agent", `${item.kind} ${item.agentPath ?? ""}`.trim(), { result: item.model ?? "" });
     default:
@@ -176,12 +211,15 @@ export function turnsToMessages(turns: any[], meta: (turnId: string) => TurnMeta
 }
 
 export function toThreadMessage(m: Msg): ThreadMessageLike {
+  // A message another chat sent here shows as from that agent, without the CLI's header lines.
+  const first = m.role === "user" ? m.parts.find((p) => p.type === "text") : undefined;
+  const incoming = first && "text" in first ? agentMessage(first.text) : null;
   return {
     id: m.id,
     role: m.role,
     status: m.role === "assistant" ? (m.running ? { type: "running" } : { type: "complete", reason: "stop" }) : undefined,
-    metadata: { custom: { ...m.meta, turnId: m.turnId } },
-    content: m.parts.map((p) =>
+    metadata: { custom: { ...m.meta, turnId: m.turnId, from: incoming?.from } },
+    content: m.parts.map((p) => (incoming && p === first ? { ...p, text: incoming.text } : p)).map((p) =>
       p.type === "tool-call"
         ? { type: "tool-call", toolCallId: p.itemId, toolName: p.toolName, argsText: p.argsText, args: p.args, result: p.result, isError: p.isError }
         : p.type === "image"

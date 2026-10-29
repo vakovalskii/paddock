@@ -41,18 +41,14 @@ if (want) await page.waitForFunction((m) => document.querySelector("main")?.inne
 await page.click('[title="Settings"]');
 await page.evaluate(() => [...document.querySelectorAll(".fixed.inset-0 button")].find((b) => b.innerText.trim() === "Tools").click());
 await page.waitForFunction(() => /Agents/.test(document.querySelector(".fixed.inset-0").innerText) && !/reading skills/.test(document.querySelector(".fixed.inset-0").innerText), { timeout: 20000 });
-const cardSel = await page.evaluate(() => {
-  const cards = [...document.querySelectorAll(".fixed.inset-0 section:first-of-type .rounded-xl")];
-  const i = cards.findIndex((c) => c.innerText.includes("Agents"));
-  return i;
-});
-const card = `.fixed.inset-0 section:first-of-type .rounded-xl:nth-of-type(${cardSel + 1})`;
-const on = await page.evaluate((i) => [...document.querySelectorAll(".fixed.inset-0 section:first-of-type .rounded-xl")][i].querySelector("input[type=checkbox]").checked, cardSel);
-if (!on) await page.evaluate((i) => [...document.querySelectorAll(".fixed.inset-0 section:first-of-type .rounded-xl")][i].querySelector("input[type=checkbox]").click(), cardSel);
-await page.evaluate((i) => [...[...document.querySelectorAll(".fixed.inset-0 section:first-of-type .rounded-xl")][i].querySelectorAll("button")].find((b) => /Apply|Update/.test(b.innerText) && !b.disabled)?.click(), cardSel);
+// The Agents card: its label holds the checkbox and the description; Apply sits next to it.
+const label = () => [...document.querySelectorAll(".fixed.inset-0 label")].find((l) => l.querySelector("input[type=checkbox]") && l.innerText.includes("other open chats"));
+await page.waitForFunction(label, { timeout: 20000 });
+const on = await page.evaluate((f) => new Function(`return (${f})()`)().querySelector("input").checked, label.toString());
+if (!on) await page.evaluate((f) => new Function(`return (${f})()`)().querySelector("input").click(), label.toString());
+await page.evaluate((f) => [...new Function(`return (${f})()`)().parentElement.querySelectorAll("button")].find((b) => /Apply|Update/.test(b.innerText) && !b.disabled)?.click(), label.toString());
 await sleep(2500);
-check("agents tool installed", await page.evaluate((i) => /installed/.test([...document.querySelectorAll(".fixed.inset-0 section:first-of-type .rounded-xl")][i].innerText), cardSel));
-void card;
+check("agents tool installed", await page.evaluate((f) => /installed/.test(new Function(`return (${f})()`)().innerText), label.toString()));
 await page.keyboard.press("Escape");
 
 // 2. Two panes: the second one learns a code word.
@@ -71,9 +67,10 @@ const stuck = await idle(300);
 check("both panes idle after the exchange", stuck.length === 0, stuck.length ? `still running: ${stuck.join(",")}` : "");
 const p0 = await pane(0);
 const p1 = await pane(1);
-check("asker got the build number", p0.includes(word), p0.slice(-200).replace(/\n/g, " "));
-check("other pane shows the agent's message", /paddock-agents: from/.test(p1));
-check("other pane answered it", (p1.match(new RegExp(word, "g")) ?? []).length >= 2);
+check("asker got the build number", p0.toLowerCase().includes(word), p0.slice(-200).replace(/\n/g, " "));
+check("other pane shows it as from an agent", !!(await page.$('[data-pane="1"] [data-agent-from]')) && !/paddock-agents: from/.test(p1));
+check("asker shows the exchange as a message card", /Message to/.test(p0) && p0.toLowerCase().includes(word));
+check("other pane answered it", (p1.toLowerCase().match(new RegExp(word, "g")) ?? []).length >= 2);
 await page.screenshot({ path: process.argv[2] ?? "/tmp/agents.png" });
 
 for (let k = 0; k < 2; k++) { await page.evaluate(() => document.querySelector("nav [data-archive]")?.click()); await sleep(600); }

@@ -47,13 +47,13 @@ export async function listNodes(): Promise<{ nodes: ProxyNode[]; strategy: strin
 
 // Новый список узлов: порядок = приоритет (fifo). Пустой пароль у существующего узла = оставить прежний.
 export async function saveNodes(input: ProxyInput[]) {
-  if (input.length === 0) throw new Error("нужен хотя бы один прокси, иначе Codex останется без сети");
+  if (input.length === 0) throw new Error("at least one proxy is needed, otherwise Codex has no network");
   const names = new Set<string>();
   for (const n of input) {
-    if (!/^[\w-]{1,40}$/.test(n.name)) throw new Error(`имя «${n.name}»: латиница, цифры, - _`);
-    if (names.has(n.name)) throw new Error(`имя «${n.name}» повторяется`);
+    if (!/^[\w-]{1,40}$/.test(n.name)) throw new Error(`name "${n.name}": latin letters, digits, - and _ only`);
+    if (names.has(n.name)) throw new Error(`name "${n.name}" is used twice`);
     names.add(n.name);
-    if (!/^[\w.-]+:\d{1,5}$/.test(n.addr)) throw new Error(`адрес «${n.addr}»: нужен host:port`);
+    if (!/^[\w.-]+:\d{1,5}$/.test(n.addr)) throw new Error(`address "${n.addr}": expected host:port`);
   }
   const chain = await readChain();
   const hop = chain.hops?.[0] ?? { name: "hop-0" };
@@ -140,10 +140,10 @@ export function netReport(force = false): Promise<NetReport> {
 // HTTPS-запрос наружу через egress:8080 (CONNECT): у морды нет прямого выхода в интернет.
 export function viaEgress(host: string, path: string, headers: Record<string, string> = {}, port = 8080, timeoutMs = 15000): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { req.destroy(); reject(new Error(`таймаут ${timeoutMs / 1000} с`)); }, timeoutMs);
+    const timer = setTimeout(() => { req.destroy(); reject(new Error(`timeout ${timeoutMs / 1000} s`)); }, timeoutMs);
     const req = httpRequest({ host: "egress", port, method: "CONNECT", path: `${host}:443` });
     req.on("connect", (res, socket) => {
-      if (res.statusCode !== 200) { clearTimeout(timer); return reject(new Error(`egress ответил ${res.statusCode}`)); }
+      if (res.statusCode !== 200) { clearTimeout(timer); return reject(new Error(`egress answered ${res.statusCode}`)); }
       const tls = tlsConnect({ socket, servername: host }, () => {
         const extra = Object.entries(headers).map(([k, v]) => `${k}: ${v}\r\n`).join("");
         // HTTP/1.0 — ответ без chunked, читаем до закрытия соединения

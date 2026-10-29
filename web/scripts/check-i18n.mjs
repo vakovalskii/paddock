@@ -8,7 +8,7 @@ for (const f of readdirSync("lib/i18n")) {
   const src = readFileSync(join("lib/i18n", f), "utf8");
   for (const m of src.matchAll(/^\s*"((?:[^"\\]|\\.)*)"\s*:/gm)) dict.add(JSON.parse(`"${m[1]}"`));
 }
-const files = ["app/login/page.tsx", "lib/format.ts", "lib/messages.ts", "lib/tools.ts", ...readdirSync("components").map((f) => join("components", f))];
+const files = ["app/login/page.tsx", ...readdirSync("lib").filter((f) => /\.tsx?$/.test(f) && f !== "i18n.ts").map((f) => join("lib", f)), ...readdirSync("components").map((f) => join("components", f))];
 const missing = [];
 const russian = [];
 for (const f of files) {

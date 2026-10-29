@@ -18,9 +18,16 @@ import { LocalImage } from "./local-image";
 const iconBtn = "rounded-md p-1.5 text-[var(--faint)] hover:bg-[var(--panel)] hover:text-[var(--fg)]";
 
 export function UserMessage() {
+  const from = useAuiState((s) => (s.message.metadata.custom as { from?: { id: string; title: string | null } }).from);
   return (
     <MessagePrimitive.Root className="group flex flex-col items-end gap-1">
-      <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-[var(--panel-2)] px-4 py-2.5 leading-relaxed">
+      {from && (
+        <span className="flex items-center gap-1.5 text-xs text-[var(--teal)]" data-agent-from={from.id}>
+          <Icon name="sparkle" size={12} />
+          {t("from agent")} {from.title ? `«${from.title}»` : ""} <span className="font-mono text-[var(--faint)]">{from.id.replace(/-/g, "").slice(-8)}</span>
+        </span>
+      )}
+      <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md px-4 py-2.5 leading-relaxed ${from ? "border border-[var(--teal)]/40 bg-[var(--teal)]/10" : "bg-[var(--panel-2)]"}`}>
         <MessagePrimitive.Parts components={{ Image: UserImage }} />
       </div>
       <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
@@ -132,8 +139,8 @@ const toolLook: Record<ToolArgs["kind"], { icon: IconName; label: string; tint: 
 };
 
 function ToolCard({ args, argsText, result, isError }: ToolCallMessagePartProps) {
-  const [open, setOpen] = useState(false);
   const a = args as unknown as ToolArgs;
+  const [open, setOpen] = useState(a.expand === true);
   const look = toolLook[a.kind] ?? toolLook.tool;
   const out = typeof result === "string" ? result : result == null ? "" : JSON.stringify(result, null, 2);
   const pending = result === undefined;
@@ -170,6 +177,12 @@ function ToolCard({ args, argsText, result, isError }: ToolCallMessagePartProps)
         <div className="max-h-[28rem] overflow-auto border-t border-[var(--border)] bg-[var(--bg)]/60 p-3 font-mono text-[12px] leading-relaxed">
           {a.links ? (
             <WebResults links={a.links} />
+          ) : a.kind === "agent" && a.expand ? (
+            // A message to another chat: the question, then its answer, as conversation rather than terminal output.
+            <div className="space-y-2 font-sans text-[13px]">
+              <div className="whitespace-pre-wrap text-[var(--muted)]">→ {argsText}</div>
+              <div className="whitespace-pre-wrap border-l-2 border-[var(--teal)]/50 pl-2.5">{out || (pending ? t("waiting for the answer…") : t("(empty)"))}</div>
+            </div>
           ) : (
             <>
           {detail && <div className="mb-2 whitespace-pre-wrap text-[var(--muted)]">$ {detail}</div>}
