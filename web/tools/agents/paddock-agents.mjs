@@ -33,6 +33,8 @@ const MAX_HOPS = 5;
 const HOP_WINDOW_MS = 10 * 60 * 1000;
 const SHELLS = new Set(["zsh", "bash", "sh", "fish", "dash", "ksh", "tcsh", "nu", "login", "tmux"]);
 const SEP = " |pa| ";
+// What a TUI shows while it waits for the user to approve something: an Enter sent there would answer it.
+const APPROVAL = /Do you want to|Allow (this|command|execution|edit)|Would you like to run|Yes, proceed|Yes, allow|Yes, and don't ask|Enter to confirm|Press enter to (confirm|continue)|\(y\/n\)|\[y\/N\]/i;
 const HEADER = /^\[paddock-agents: from ([^\s,"]+)(?: "([^"]*)")?, hop (\d+)(, waiting)?(?:, msg ([0-9a-f]+))?\]/;
 
 const die = (msg) => {
@@ -262,9 +264,13 @@ async function send(prefix, body, wait, timeoutS) {
       ? `The sender is waiting for your answer: when you are done, run: node ${BIN} reply ${msg} "your final answer"`
       : "The sender is waiting for your final answer: just answer, do not send a message back.";
   const full = `${header}\n${hint}\n\n${body}`;
-  logMessage({ msg, from: SELF || "unknown", to: t.id, transport: t.transport, hop, wait, body });
 
   if (t.transport === "tmux") {
+    // Pasted into a shell, every line of the message would run as a command.
+    if (SHELLS.has(t.pane.cmd)) die(`${t.id} runs a shell (${t.pane.cmd}), not an agent; not sending`);
+    if (APPROVAL.test(capture(t.id, 0).split("\n").slice(-15).join("\n")))
+      die(`${t.id} is waiting for the user to approve something; not sending, an Enter there would answer it. Try later`);
+    logMessage({ msg, from: SELF || "unknown", to: t.id, transport: t.transport, hop, wait, body });
     await paste(t.id, full, msg);
     console.log(`sent to ${t.id}`);
     if (!wait) return;
@@ -282,6 +288,7 @@ async function send(prefix, body, wait, timeoutS) {
   }
 
   const input = [{ type: "text", text: full, text_elements: [] }];
+  logMessage({ msg, from: SELF || "unknown", to: t.id, transport: t.transport, hop, wait, body });
   let turnId;
   const [cur] = await lastTurns(t.id, 1).catch(() => []);
   if (cur?.status === "inProgress") {

@@ -1,6 +1,6 @@
-// paddock-agents over tmux, no model and no Paddock: a private tmux server (its own TMUX_TMPDIR) with two scripted
-// "agents" and a bare shell. Checks list (shells hidden, "← you"), send with a multi-line message, read, --wait with
-// reply, the markdown message log and the hop limit.
+// paddock-agents over tmux, no model and no Paddock: a private tmux server (its own TMUX_TMPDIR) with three scripted
+// "agents" (one of them sitting on an approval prompt) and a bare shell. Checks list (shells hidden, "← you"), send with a multi-line message, read, --wait with
+// reply, the markdown message log, refusals to type into a shell or an approval prompt, and the hop limit.
 // Run: node tests/agents-tmux.mjs   (needs tmux)
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync, readdirSync, readFileSync, mkdirSync, rmSync } from "node:fs";
@@ -28,7 +28,7 @@ const cli = (...a) => {
 const fake = join(root, "fake-agent.mjs");
 writeFileSync(fake, `
 import { execSync } from "node:child_process";
-process.stdout.write("fake agent ready\\n");
+process.stdout.write(process.argv[2] === "asking" ? "Run rm -rf build?\\nDo you want to proceed?\\n❯ 1. Yes\\n  2. No\\n" : "fake agent ready\\n");
 let buf = "", timer;
 process.stdin.on("data", (d) => {
   buf += d;
@@ -45,6 +45,8 @@ process.stdin.on("data", (d) => {
 tmux("new-session", "-d", "-s", "t", "-x", "200", "-y", "50", `exec ${process.execPath} ${fake}`);
 tmux("split-window", "-t", "t", `exec ${process.execPath} ${fake}`);
 tmux("split-window", "-t", "t", "exec sh");
+tmux("split-window", "-t", "t", `exec ${process.execPath} ${fake} asking`);
+tmux("select-layout", "-t", "t", "tiled");
 await sleep(1500);
 
 // 1. list: the two agents, not the shell; the caller is marked.
@@ -70,13 +72,17 @@ check("--wait: answer comes back through reply", /answer from %1 \(replied\):\n\
 const logged = readdirSync(join(root, "bus", "messages")).map((f) => readFileSync(join(root, "bus", "messages", f), "utf8"));
 check("log: one markdown file per message", logged.length === 2 && logged.every((m) => /^---\nmsg: "[0-9a-f]{8}"\nfrom: "%0"\nto: "%1"\ntransport: "tmux"/.test(m)));
 
-// 5. Hop limit: the caller's last incoming message was hop 5, so it may not send a sixth.
+// 5. Never type into a shell or into a pending approval.
+check("shell pane: refused", /runs a shell/.test(cli("send", "%2", "echo pwned")));
+check("approval prompt: refused", /waiting for the user to approve/.test(cli("send", "%3", "hi")));
+
+// 6. Hop limit: the caller's last incoming message was hop 5, so it may not send a sixth.
 mkdirSync(join(root, "bus", "messages"), { recursive: true });
 writeFileSync(join(root, "bus", "messages", "9999-hop.md"), `---\nmsg: "00000000"\nfrom: "%1"\nto: "%0"\ntransport: "tmux"\nhop: 5\nwaiting: false\nat: "${new Date().toISOString()}"\n---\n\nhi\n`);
 const refused = cli("send", "%1", "one more");
 check("hop limit: sixth hop refused", /EXIT 1/.test(refused) && /5 agent-to-agent messages/.test(refused));
 
-// 6. Errors.
+// 7. Errors.
 check("unknown pane: clear error", /no tmux pane %9/.test(cli("send", "%9", "hi")));
 check("own pane: refused", /your own chat/.test(cli("send", "%0", "hi")));
 check("skill: path filled in", cli("skill").includes(`node ${BIN} list`));
