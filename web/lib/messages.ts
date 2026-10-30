@@ -60,7 +60,7 @@ function bareCommand(cmd: string): string {
 }
 
 // A message between chats (paddock-agents): the header the CLI puts on it, and the hint line under it.
-const AGENT_HEADER = /^\[paddock-agents: from ([0-9a-f-]+|unknown)(?: "([^"]*)")?, hop \d+(?:, waiting)?\]\n(?:(?:The sender is waiting|To answer, run)[^\n]*\n)?\n?/;
+const AGENT_HEADER = /^\[paddock-agents: from ([^\s,"]+)(?: "([^"]*)")?, hop \d+(?:, waiting)?(?:, msg [0-9a-f]+)?\]\n(?:(?:The sender is waiting|To answer, run)[^\n]*\n)?\n?/;
 export function agentMessage(text: string): { from: { id: string; title: string | null }; text: string } | null {
   const m = text.match(AGENT_HEADER);
   return m ? { from: { id: m[1], title: m[2] ?? null }, text: text.slice(m[0].length) } : null;

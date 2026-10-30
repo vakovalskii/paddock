@@ -17,7 +17,7 @@ Paddock 不自带 Agent。它使用现成的 harness（目前是 Codex app-serve
 - **模型。** ChatGPT 订阅（直接在界面中用 device code 登录），以及任何支持 Responses API 的 OpenAI 兼容服务商，例如 [NeuralDeep](https://neuraldeep.ru/docs)。
 - **与 harness 无关的工具。** Paddock 工具 = 一个 CLI + 一个告诉 Agent 何时调用它的 skill。所有 harness 和所有模型都有 shell，所以工具在任何地方都能用。第一个工具：图像生成与编辑（`paddock-images`）。
 - **查看每个对话可以用什么。** 当前会话可用的 skill 和 CLI，以及 Agent 实际用了哪些。
-- **Agent 之间可以对话。** `paddock-agents` 工具让一个窗格里的 Agent 列出你其他打开的对话、读取它们并给它们发消息：移交任务、请求 review、汇总所有对话的状态。接收方窗格显示为 *来自 Agent «…»*，提问方窗格显示问题和回答。
+- **Agent 之间可以对话。** `paddock-agents` 工具让一个窗格里的 Agent 列出你其他打开的对话、读取它们并给它们发消息：移交任务、请求 review、汇总所有对话的状态。接收方窗格显示为 *来自 Agent «…»*，提问方窗格显示问题和回答。同一个命令在 Paddock 之外也能用，适用于 tmux 窗格里的任何 Agent（Claude Code、Codex CLI、Gemini CLI）：`node paddock-agents.mjs skill` 输出要安装的 skill。
 - **与 Codex CLI 相同的斜杠命令。** `/new`、`/compact`、`/review`、`/diff`、`/init`、`/rename`、`/fork`、`/goal`、`/status`、`/help`，以及在对话中执行 shell 命令的 `!命令`；输入 `/` 会弹出提示列表。
 - **子 Agent。** Codex 子 Agent 的调用以卡片显示；在 设置 → Codex 中可为 OpenAI 模型开启 `multi_agent_v2`（列表、消息、中断）。
 - **危险命令总是先询问。** `rm`、`git push/reset/clean` 等命令无论审批策略如何都会停在确认卡片上（随 harness 一起提供的 Codex execpolicy 规则）。
