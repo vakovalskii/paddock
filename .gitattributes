@@ -1,0 +1,5 @@
+# Скрипты и конфиги читают Linux-даемоны внутри контейнеров — только LF,
+# иначе bash ломается на \r (shebang `no such file or directory`, `invalid option name`).
+*.sh text eol=lf
+edge/nginx.conf text eol=lf
+codex/config.toml text eol=lf

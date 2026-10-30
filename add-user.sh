@@ -19,6 +19,7 @@ sed -e "s/__USER__/$U/g" -e "s|      # __ADMIN_MOUNT__|$mount|" users/_template.
 
 files="docker-compose.yml"
 for f in users/*.yml; do [ "$(basename "$f")" = _template.yml ] || files="$files:$f"; done
-{ grep -v '^COMPOSE_FILE=' .env 2>/dev/null || true; echo "COMPOSE_FILE=$files"; } > .env.tmp && mv .env.tmp .env
+# COMPOSE_PATH_SEPARATOR=: — на Windows compose по умолчанию делит COMPOSE_FILE по ';'
+{ grep -v -e '^COMPOSE_FILE=' -e '^COMPOSE_PATH_SEPARATOR=' .env 2>/dev/null || true; echo "COMPOSE_FILE=$files"; echo "COMPOSE_PATH_SEPARATOR=:"; } > .env.tmp && mv .env.tmp .env
 
 echo "added $U; compose files: $files"
